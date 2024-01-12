@@ -40,6 +40,79 @@ const emitJumpKind emitReverseJumpKinds[] = {
 #include "emitjmps.h"
 };
 
+static constexpr size_t NBitMask(uint8_t bits)
+{
+    return (static_cast<size_t>(1) << bits) - 1;
+}
+
+template <uint8_t MaskSize>
+static ssize_t LowerNBitsOfWord(ssize_t word)
+{
+    static_assert(MaskSize < 32, "Given mask size is bigger tham the word itself");
+    static_assert(MaskSize > 0, "Given mask size cannot be zero");
+
+    static constexpr size_t kMask = NBitMask(MaskSize);
+
+    return word & kMask;
+}
+
+template <uint8_t MaskSize>
+static ssize_t UpperNBitsOfWord(ssize_t word)
+{
+    static constexpr size_t kShift = 32 - MaskSize;
+
+    return LowerNBitsOfWord<MaskSize>(word >> kShift);
+}
+
+template <uint8_t RangeBegin, uint8_t MaskSize>
+static ssize_t MiddleNBitsOfWord(ssize_t word)
+{
+    return LowerNBitsOfWord<MaskSize>(word >> RangeBegin);
+}
+
+template <uint8_t MaskSize>
+static ssize_t UpperNBitsOfWordSignExtend(ssize_t word)
+{
+    static constexpr unsigned kSignExtend = 1 << (31 - MaskSize);
+
+    return UpperNBitsOfWord<MaskSize>(word + kSignExtend);
+}
+
+static ssize_t UpperWordOfDoubleWord(ssize_t immediate)
+{
+    return immediate >> 32;
+}
+
+static ssize_t LowerWordOfDoubleWord(ssize_t immediate)
+{
+    static constexpr size_t kWordMask = NBitMask(32);
+
+    return immediate & kWordMask;
+}
+
+template <uint8_t UpperMaskSize, uint8_t LowerMaskSize>
+static ssize_t DoubleWordSignExtend(ssize_t doubleWord)
+{
+    static constexpr size_t kLowerSignExtend = static_cast<size_t>(1) << (63 - LowerMaskSize);
+    static constexpr size_t kUpperSignExtend = static_cast<size_t>(1) << (63 - UpperMaskSize);
+
+    return doubleWord + (kLowerSignExtend | kUpperSignExtend);
+}
+
+template <uint8_t UpperMaskSize>
+static ssize_t UpperWordOfDoubleWordSingleSignExtend(ssize_t doubleWord)
+{
+    static constexpr size_t kUpperSignExtend = static_cast<size_t>(1) << (31 - UpperMaskSize);
+
+    return UpperWordOfDoubleWord(doubleWord + kUpperSignExtend);
+}
+
+template <uint8_t UpperMaskSize, uint8_t LowerMaskSize>
+static ssize_t UpperWordOfDoubleWordDoubleSignExtend(ssize_t doubleWord)
+{
+    return UpperWordOfDoubleWord(DoubleWordSignExtend<UpperMaskSize, LowerMaskSize>(doubleWord));
+}
+
 /*****************************************************************************
  * Look up the instruction for a jump kind
  */
@@ -1500,7 +1573,9 @@ BYTE* emitter::emitOutputCall_EmitJump(const insGroup* ig, BYTE* dst, instrDesc*
 BYTE* emitter::emitOutputCall_EmitJumpReloc(BYTE* dst, instrDesc* id) {
     BYTE* const blockBase = dst;
     dst += emitOutput_UTypeInstr(dst, INS_auipc, REG_DEFAULT_HELPER_CALL_TARGET, 0);
+
     uintptr_t address = reinterpret_cast<uintptr_t>(id->idAddr()->iiaAddr);
+
     regNumber destReg = (address % 2) ? REG_A1 : REG_A0;
     address ^= 0x01;
 
@@ -1513,7 +1588,29 @@ BYTE* emitter::emitOutputCall_EmitJumpReloc(BYTE* dst, instrDesc* id) {
 }
 
 BYTE* emitter::emitOutputCall_EmitJumpNoReloc(BYTE* dst, instrDesc* id) {
+    static constexpr regNumber kCallReg = REG_DEFAULT_HELPER_CALL_TARGET;
 
+    uintptr_t address = static_cast<uintptr_t>(id->idAddr()->iiaAddr);
+    assert(UpperWordOfDoubleWord(address) <= 0xff);
+
+    regNumber destReg = (address % 2) ? REG_RA : REG_ZERO;
+    address ^= 0x01;
+
+    unsigned upperWord = UpperWordOfDoubleWord(address);
+    unsigned lowerWord = LowerWordOfDoubleWord(address);
+
+    dst += emitOutput_UTypeInstr(dst, INS_lui, kCallReg, UpperNBitsOfWordSignExtend<20>(upperWord));
+
+    emitGCregDeadUpd(kCallReg, dst);
+
+    dst += emitOutput_ITypeInstr(dst, INS_addi, kCallReg, kCallReg, LowerNBitsOfWord<12>(upperWord));
+    dst += emitOutput_ITypeInstr(dst, INS_slli, kCallReg, kCallReg, 11);
+    dst += emitOutput_ITypeInstr(dst, INS_addi, kCallReg, kCallReg, UpperNBitsOfWord<11>(lowerWord));
+    dst += emitOutput_ITypeInstr(dst, INS_slli, kCallReg, kCallReg, 11);
+    dst += emitOutput_ITypeInstr(dst, INS_addi, kCallReg, kCallReg, MiddleNBitsOfWord<10, 11>(lowerWord));
+    dst += emitOutput_ITypeInstr(dst, INS_slli, kCallReg, kCallReg, 10);
+    dst += emitOutput_ITypeInstr(dst, INS_jalr, destReg, kCallReg, LowerNBitsOfWord<10>(lowerWord));
+    return dst;
 }
 
 /*****************************************************************************
@@ -2760,73 +2857,6 @@ ssize_t emitter::emitOutputInstrJumpDistance(const BYTE* src, const insGroup* ig
         }
     }
     return distVal;
-}
-
-static constexpr size_t NBitMask(uint8_t bits)
-{
-    return (static_cast<size_t>(1) << bits) - 1;
-}
-
-template <uint8_t MaskSize>
-static ssize_t LowerNBitsOfWord(ssize_t word)
-{
-    static_assert(MaskSize < 32, "Given mask size is bigger tham the word itself");
-    static_assert(MaskSize > 0, "Given mask size cannot be zero");
-
-    static constexpr size_t kMask = NBitMask(MaskSize);
-
-    return word & kMask;
-}
-
-template <uint8_t MaskSize>
-static ssize_t UpperNBitsOfWord(ssize_t word)
-{
-    static constexpr size_t kShift = 32 - MaskSize;
-
-    return LowerNBitsOfWord<MaskSize>(word >> kShift);
-}
-
-template <uint8_t MaskSize>
-static ssize_t UpperNBitsOfWordSignExtend(ssize_t word)
-{
-    static constexpr unsigned kSignExtend = 1 << (31 - MaskSize);
-
-    return UpperNBitsOfWord<MaskSize>(word + kSignExtend);
-}
-
-static ssize_t UpperWordOfDoubleWord(ssize_t immediate)
-{
-    return immediate >> 32;
-}
-
-static ssize_t LowerWordOfDoubleWord(ssize_t immediate)
-{
-    static constexpr size_t kWordMask = NBitMask(32);
-
-    return immediate & kWordMask;
-}
-
-template <uint8_t UpperMaskSize, uint8_t LowerMaskSize>
-static ssize_t DoubleWordSignExtend(ssize_t doubleWord)
-{
-    static constexpr size_t kLowerSignExtend = static_cast<size_t>(1) << (63 - LowerMaskSize);
-    static constexpr size_t kUpperSignExtend = static_cast<size_t>(1) << (63 - UpperMaskSize);
-
-    return doubleWord + (kLowerSignExtend | kUpperSignExtend);
-}
-
-template <uint8_t UpperMaskSize>
-static ssize_t UpperWordOfDoubleWordSingleSignExtend(ssize_t doubleWord)
-{
-    static constexpr size_t kUpperSignExtend = static_cast<size_t>(1) << (31 - UpperMaskSize);
-
-    return UpperWordOfDoubleWord(doubleWord + kUpperSignExtend);
-}
-
-template <uint8_t UpperMaskSize, uint8_t LowerMaskSize>
-static ssize_t UpperWordOfDoubleWordDoubleSignExtend(ssize_t doubleWord)
-{
-    return UpperWordOfDoubleWord(DoubleWordSignExtend<UpperMaskSize, LowerMaskSize>(doubleWord));
 }
 
 /*static*/ unsigned emitter::TrimSignedToImm12(int imm12)
