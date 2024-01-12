@@ -1461,6 +1461,27 @@ void emitter::emitIns_Call(EmitCallType          callType,
     appendToCurIG(id);
 }
 
+void emitOutputCall_InitializeRefs(instrDesc* id, regMaskTP* gcrefRegs, regMaskTP* byrefRegs)
+{
+    // Is this a "fat" call descriptor?
+    if (id->idIsLargeCall())
+    {
+        instrDescCGCA* idCall = static_cast<instrDescCGCA*>(id);
+        *gcrefRegs            = idCall->idcGcrefRegs;
+        *byrefRegs            = idCall->idcByrefRegs;
+        VarSetOps::Assign(emitComp, GCvars, idCall->idcGCvars);
+    }
+    else
+    {
+        assert(!id->idIsLargeDsp());
+        assert(!id->idIsLargeCns());
+
+        *gcrefRegs = emitDecodeCallGCregs(id);
+        *byrefRegs = 0;
+        VarSetOps::AssignNoCopy(emitComp, GCvars, VarSetOps::MakeEmpty(emitComp));
+    }
+}
+
 /*****************************************************************************
  *
  *  Output a call instruction.
@@ -1473,24 +1494,7 @@ unsigned emitter::emitOutputCall(const insGroup* ig, BYTE* dst, instrDesc* id, c
     regMaskTP     byrefRegs;
 
     VARSET_TP GCvars(VarSetOps::UninitVal());
-
-    // Is this a "fat" call descriptor?
-    if (id->idIsLargeCall())
-    {
-        instrDescCGCA* idCall = (instrDescCGCA*)id;
-        gcrefRegs             = idCall->idcGcrefRegs;
-        byrefRegs             = idCall->idcByrefRegs;
-        VarSetOps::Assign(emitComp, GCvars, idCall->idcGCvars);
-    }
-    else
-    {
-        assert(!id->idIsLargeDsp());
-        assert(!id->idIsLargeCns());
-
-        gcrefRegs = emitDecodeCallGCregs(id);
-        byrefRegs = 0;
-        VarSetOps::AssignNoCopy(emitComp, GCvars, VarSetOps::MakeEmpty(emitComp));
-    }
+    emitOutputCall_InitializeRefs(id, &gcrefRegs, &byrefRegs);
 
     /* We update the GC info before the call as the variables cannot be
         used by the call. Killing variables before the call helps with

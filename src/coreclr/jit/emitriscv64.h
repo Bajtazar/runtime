@@ -146,6 +146,8 @@ static unsigned TrimSignedToImm13(int imm13);
 static unsigned TrimSignedToImm20(int imm20);
 static unsigned TrimSignedToImm21(int imm21);
 
+void emitOutputCall_InitializeRefs(instrDesc* id, regMaskTP* gcrefRegs, regMaskTP* byrefRegs);
+
 /************************************************************************/
 /*           Public inline informational methods                        */
 /************************************************************************/
