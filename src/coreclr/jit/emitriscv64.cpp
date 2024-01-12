@@ -1555,22 +1555,29 @@ void emitter::emitOutputCall_InitializeRefs(instrDesc* id, regMaskTP* gcrefRegs,
     }
 }
 
-BYTE* emitter::emitOutputCall_EmitJump(const insGroup* ig, BYTE* dst, instrDesc* id) {
+BYTE* emitter::emitOutputCall_EmitJump(const insGroup* ig, BYTE* dst, instrDesc* id)
+{
     assert(id->idIns() == INS_jalr);
 
-    if (id->idIsCallRegPtr()) {
+    if (id->idIsCallRegPtr())
+    {
         // EC_INDIR_R
         dst += emitOutput_ITypeInstr(dst, INS_jalr, id->idReg4(), id->idReg3(), 0);
-    } else if (id->idIsReloc()) {
+    }
+    else if (id->idIsReloc())
+    {
         // pc + offset_32bits
         dst = emitOutputCall_EmitJumpReloc(dst, id);
-    } else {
+    }
+    else
+    {
         // dst = emitOutputCall_EmitJumpNoReloc
     }
     return dst;
 }
 
-BYTE* emitter::emitOutputCall_EmitJumpReloc(BYTE* dst, instrDesc* id) {
+BYTE* emitter::emitOutputCall_EmitJumpReloc(BYTE* dst, instrDesc* id)
+{
     BYTE* const blockBase = dst;
     dst += emitOutput_UTypeInstr(dst, INS_auipc, REG_DEFAULT_HELPER_CALL_TARGET, 0);
 
@@ -1587,7 +1594,8 @@ BYTE* emitter::emitOutputCall_EmitJumpReloc(BYTE* dst, instrDesc* id) {
     return dst;
 }
 
-BYTE* emitter::emitOutputCall_EmitJumpNoReloc(BYTE* dst, instrDesc* id) {
+BYTE* emitter::emitOutputCall_EmitJumpNoReloc(BYTE* dst, instrDesc* id)
+{
     static constexpr regNumber kCallReg = REG_DEFAULT_HELPER_CALL_TARGET;
 
     uintptr_t address = static_cast<uintptr_t>(id->idAddr()->iiaAddr);
