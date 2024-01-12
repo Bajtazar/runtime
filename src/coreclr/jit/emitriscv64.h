@@ -146,7 +146,7 @@ static unsigned TrimSignedToImm13(int imm13);
 static unsigned TrimSignedToImm20(int imm20);
 static unsigned TrimSignedToImm21(int imm21);
 
-void emitOutputCall_InitializeRefs(instrDesc* id, regMaskTP* gcrefRegs, regMaskTP* byrefRegs);
+void emitOutputCall_InitializeRefs(instrDesc* id, regMaskTP* gcrefRegs, regMaskTP* byrefRegs, VARSET_TP* GCvars);
 BYTE* emitOutputCall_EmitJump(BYTE* dst, instrDesc* id);
 BYTE* emitOutputCall_EmitJumpReloc(BYTE* dst, instrDesc* id);
 BYTE* emitOutputCall_EmitJumpNoReloc(BYTE* dst, instrDesc* id);

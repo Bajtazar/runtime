@@ -1534,7 +1534,10 @@ void emitter::emitIns_Call(EmitCallType          callType,
     appendToCurIG(id);
 }
 
-void emitter::emitOutputCall_InitializeRefs(instrDesc* id, regMaskTP* gcrefRegs, regMaskTP* byrefRegs)
+void emitter::emitOutputCall_InitializeRefs(instrDesc* id,
+                                            regMaskTP* gcrefRegs,
+                                            regMaskTP* byrefRegs,
+                                            VARSET_TP* GCvars)
 {
     // Is this a "fat" call descriptor?
     if (id->idIsLargeCall())
@@ -1542,7 +1545,7 @@ void emitter::emitOutputCall_InitializeRefs(instrDesc* id, regMaskTP* gcrefRegs,
         instrDescCGCA* idCall = static_cast<instrDescCGCA*>(id);
         *gcrefRegs            = idCall->idcGcrefRegs;
         *byrefRegs            = idCall->idcByrefRegs;
-        VarSetOps::Assign(emitComp, GCvars, idCall->idcGCvars);
+        VarSetOps::Assign(emitComp, *GCvars, idCall->idcGCvars);
     }
     else
     {
@@ -1551,7 +1554,7 @@ void emitter::emitOutputCall_InitializeRefs(instrDesc* id, regMaskTP* gcrefRegs,
 
         *gcrefRegs = emitDecodeCallGCregs(id);
         *byrefRegs = 0;
-        VarSetOps::AssignNoCopy(emitComp, GCvars, VarSetOps::MakeEmpty(emitComp));
+        VarSetOps::AssignNoCopy(emitComp, *GCvars, VarSetOps::MakeEmpty(emitComp));
     }
 }
 
@@ -1588,7 +1591,7 @@ BYTE* emitter::emitOutputCall_EmitJumpReloc(BYTE* dst, instrDesc* id)
     regNumber destReg = (address % 2) ? REG_A1 : REG_A0;
     address ^= 0x01;
 
-    assert(isValidSimm32(address - static_cast<ssize_t>(dst)));
+    assert(isValidSimm32(address - reinterpret_cast<uintptr_t>(dst)));
     emitGCregDeadUpd(kCallReg, dst);
 
     dst += emitOutput_ITypeInstr(dst, INS_jalr, destReg, kCallReg, 0);
@@ -1600,7 +1603,7 @@ BYTE* emitter::emitOutputCall_EmitJumpNoReloc(BYTE* dst, instrDesc* id)
 {
     static constexpr regNumber kCallReg = REG_DEFAULT_HELPER_CALL_TARGET;
 
-    uintptr_t address = static_cast<uintptr_t>(id->idAddr()->iiaAddr);
+    uintptr_t address = reinterpret_cast<uintptr_t>(id->idAddr()->iiaAddr);
     assert(UpperWordOfDoubleWord(address) <= 0xff);
 
     regNumber destReg = (address % 2) ? REG_RA : REG_ZERO;
@@ -1635,7 +1638,7 @@ unsigned emitter::emitOutputCall(const insGroup* ig, BYTE* dst, instrDesc* id, c
     regMaskTP     byrefRegs;
 
     VARSET_TP GCvars(VarSetOps::UninitVal());
-    emitOutputCall_InitializeRefs(id, &gcrefRegs, &byrefRegs);
+    emitOutputCall_InitializeRefs(id, &gcrefRegs, &byrefRegs, &GCvars);
 
     /* We update the GC info before the call as the variables cannot be
         used by the call. Killing variables before the call helps with
