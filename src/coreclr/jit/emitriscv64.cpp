@@ -2265,7 +2265,7 @@ unsigned emitter::emitOutput_Instr(BYTE* dst, code_t code) const
     return sizeof(code_t);
 }
 
-static void assertCodeLength(unsigned code, uint8_t size)
+static inline void assertCodeLength(unsigned code, uint8_t size)
 {
     assert((code >> size) == 0);
 }
