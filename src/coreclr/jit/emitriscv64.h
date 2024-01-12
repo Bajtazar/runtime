@@ -147,6 +147,9 @@ static unsigned TrimSignedToImm20(int imm20);
 static unsigned TrimSignedToImm21(int imm21);
 
 void emitOutputCall_InitializeRefs(instrDesc* id, regMaskTP* gcrefRegs, regMaskTP* byrefRegs);
+BYTE* emitOutputCall_EmitJump(const insGroup* ig, BYTE* dst, instrDesc* id);
+BYTE* emitOutputCall_EmitJumpReloc(BYTE* dst, instrDesc* id);
+BYTE* emitOutputCall_EmitJumpNoReloc(BYTE* dst, instrDesc* id);
 
 /************************************************************************/
 /*           Public inline informational methods                        */

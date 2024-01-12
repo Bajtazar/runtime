@@ -1461,7 +1461,7 @@ void emitter::emitIns_Call(EmitCallType          callType,
     appendToCurIG(id);
 }
 
-void emitOutputCall_InitializeRefs(instrDesc* id, regMaskTP* gcrefRegs, regMaskTP* byrefRegs)
+void emitter::emitOutputCall_InitializeRefs(instrDesc* id, regMaskTP* gcrefRegs, regMaskTP* byrefRegs)
 {
     // Is this a "fat" call descriptor?
     if (id->idIsLargeCall())
@@ -1480,6 +1480,40 @@ void emitOutputCall_InitializeRefs(instrDesc* id, regMaskTP* gcrefRegs, regMaskT
         *byrefRegs = 0;
         VarSetOps::AssignNoCopy(emitComp, GCvars, VarSetOps::MakeEmpty(emitComp));
     }
+}
+
+BYTE* emitter::emitOutputCall_EmitJump(const insGroup* ig, BYTE* dst, instrDesc* id) {
+    assert(id->idIns() == INS_jalr);
+
+    if (id->idIsCallRegPtr()) {
+        // EC_INDIR_R
+        dst += emitOutput_ITypeInstr(dst, INS_jalr, id->idReg4(), id->idReg3(), 0);
+    } else if (id->idIsReloc()) {
+        // pc + offset_32bits
+        dst = emitOutputCall_EmitJumpReloc(dst, id);
+    } else {
+        // dst = emitOutputCall_EmitJumpNoReloc
+    }
+    return dst;
+}
+
+BYTE* emitter::emitOutputCall_EmitJumpReloc(BYTE* dst, instrDesc* id) {
+    BYTE* const blockBase = dst;
+    dst += emitOutput_UTypeInstr(dst, INS_auipc, REG_DEFAULT_HELPER_CALL_TARGET, 0);
+    uintptr_t address = reinterpret_cast<uintptr_t>(id->idAddr()->iiaAddr);
+    regNumber destReg = (address % 2) ? REG_A1 : REG_A0;
+    address ^= 0x01;
+
+    assert(isValidSimm32(address - static_cast<ssize_t>(dst)));
+    emitGCregDeadUpd(REG_DEFAULT_HELPER_CALL_TARGET, dst);
+
+    dst += emitOutput_ITypeInstr(dst, INS_jalr, destReg, REG_DEFAULT_HELPER_CALL_TARGET, 0);
+    emitRecordRelocation(blockBase, reinterpret_cast<BYTE*>(address), IMAGE_REL_RISCV64_JALR);
+    return dst;
+}
+
+BYTE* emitter::emitOutputCall_EmitJumpNoReloc(BYTE* dst, instrDesc* id) {
+
 }
 
 /*****************************************************************************
