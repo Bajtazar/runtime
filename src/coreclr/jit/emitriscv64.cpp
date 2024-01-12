@@ -1555,7 +1555,7 @@ void emitter::emitOutputCall_InitializeRefs(instrDesc* id, regMaskTP* gcrefRegs,
     }
 }
 
-BYTE* emitter::emitOutputCall_EmitJump(const insGroup* ig, BYTE* dst, instrDesc* id)
+BYTE* emitter::emitOutputCall_EmitJump(BYTE* dst, instrDesc* id)
 {
     assert(id->idIns() == INS_jalr);
 
@@ -1571,15 +1571,17 @@ BYTE* emitter::emitOutputCall_EmitJump(const insGroup* ig, BYTE* dst, instrDesc*
     }
     else
     {
-        // dst = emitOutputCall_EmitJumpNoReloc
+        dst = emitOutputCall_EmitJumpNoReloc(dst, id);
     }
     return dst;
 }
 
 BYTE* emitter::emitOutputCall_EmitJumpReloc(BYTE* dst, instrDesc* id)
 {
+    static constexpr regNumber kCallReg = REG_DEFAULT_HELPER_CALL_TARGET;
+
     BYTE* const blockBase = dst;
-    dst += emitOutput_UTypeInstr(dst, INS_auipc, REG_DEFAULT_HELPER_CALL_TARGET, 0);
+    dst += emitOutput_UTypeInstr(dst, INS_auipc, kCallReg, 0);
 
     uintptr_t address = reinterpret_cast<uintptr_t>(id->idAddr()->iiaAddr);
 
@@ -1587,9 +1589,9 @@ BYTE* emitter::emitOutputCall_EmitJumpReloc(BYTE* dst, instrDesc* id)
     address ^= 0x01;
 
     assert(isValidSimm32(address - static_cast<ssize_t>(dst)));
-    emitGCregDeadUpd(REG_DEFAULT_HELPER_CALL_TARGET, dst);
+    emitGCregDeadUpd(kCallReg, dst);
 
-    dst += emitOutput_ITypeInstr(dst, INS_jalr, destReg, REG_DEFAULT_HELPER_CALL_TARGET, 0);
+    dst += emitOutput_ITypeInstr(dst, INS_jalr, destReg, kCallReg, 0);
     emitRecordRelocation(blockBase, reinterpret_cast<BYTE*>(address), IMAGE_REL_RISCV64_JALR);
     return dst;
 }
