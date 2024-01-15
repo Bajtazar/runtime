@@ -393,54 +393,64 @@ void emitter::emitIns_S_R_R(instruction ins, emitAttr attr, regNumber rs2, regNu
     appendToCurIG(id);
 }
 
+#ifdef DEBUG
+
+void emitter::emitIns_R_S_SanityCheck(instruction ins, emitAttr attr, regNumber rd, regNumber rs1) {
+    emitAttr size = EA_SIZE(attr);
+
+    switch (ins) {
+        case INS_lb:
+        case INS_lbu:
+        case INS_lh:
+        case INS_lhu:
+        case INS_lw:
+        case INS_lwu:
+        case INS_ld:
+            assert(isGeneralRegisterOrR0(rd));
+            assert(isGeneralRegister(rs1));
+            break;
+        case INS_flw:
+        case INS_fld:
+            assert(isFloatReg(rd));
+            assert(isGeneralRegister(rs1));
+        case INS_lea:
+            assert(size == EA_8BYTE);
+            break;
+        default:
+            NO_WAY("illegal ins within emitIns_R_S!");
+            break;
+    }
+}
+
+#endif // DEBUG
+
+void emitter::emitIns_R_S_GetRs1AndImm(int varx, int offs, regNumber* rs1, ssize_t* imm) {
+    assert(offs >= 0);
+
+    /* Figure out the variable's frame position */
+    bool FPbased;
+    int base = emitComp->lvaFrameAddress(varx, &FPbased);
+    *imm  = offs < 0 ? -offs - 8 : base + offs;
+
+    *rs1 = FPbased ? REG_FPBASE : REG_SPBASE;
+
+    return offs < 0 ? -offs - 8 : offs;
+}
+
 /*
  *  Special notes for `offs`, please see the comment for `emitter::emitIns_S_R`.
  */
-void emitter::emitIns_R_S(instruction ins, emitAttr attr, regNumber reg1, int varx, int offs)
+void emitter::emitIns_R_S(instruction ins, emitAttr attr, regNumber rd, int varx, int offs)
 {
     ssize_t imm;
+    regNumber rs1;
+    emitIns_R_S_GetRs1AndImm(varx, offs, &rs1, &imm);
 
     emitAttr size = EA_SIZE(attr);
 
 #ifdef DEBUG
-    switch (ins)
-    {
-        case INS_lb:
-        case INS_lbu:
-
-        case INS_lh:
-        case INS_lhu:
-
-        case INS_lw:
-        case INS_lwu:
-        case INS_flw:
-
-        case INS_ld:
-        case INS_fld:
-
-            break;
-
-        case INS_lea:
-            assert(size == EA_8BYTE);
-            break;
-
-        default:
-            NYI_RISCV64("illegal ins within emitIns_R_S!");
-            return;
-
-    } // end switch (ins)
+    emitIns_R_S_SanityCheck(ins, attr, rd, rs1);
 #endif
-
-    /* Figure out the variable's frame position */
-    int  base;
-    bool FPbased;
-
-    base = emitComp->lvaFrameAddress(varx, &FPbased);
-    imm  = offs < 0 ? -offs - 8 : base + offs;
-
-    regNumber reg2 = FPbased ? REG_FPBASE : REG_SPBASE;
-    assert(offs >= 0);
-    offs = offs < 0 ? -offs - 8 : offs;
 
     reg1 = (regNumber)((char)reg1 & 0x1f);
     code_t code;
