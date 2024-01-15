@@ -341,7 +341,7 @@ void emitter::emitIns_S_R_R_SanityCheck(instruction ins, regNumber reg1, regNumb
 
 #endif // DEBUG
 
-void emitter::emitIns_S_R_R_GetRs1AndImm(int varx, int offs, regNumber* rs1, ssize_t* imm)
+void emitter::emitIns_S_R_R_GetRs1AndImm(int varx, int offs, regNumber tmpReg, regNumber* rs1, ssize_t* imm)
 {
     /* Figure out the variable's frame position */
     bool FPbased;
@@ -364,7 +364,7 @@ void emitter::emitIns_S_R_R(instruction ins, emitAttr attr, regNumber rs2, regNu
 {
     ssize_t   imm;
     regNumber rs1;
-    emitIns_S_R_R_GetRs1AndImm(varx, offs, &rs1, &imm);
+    emitIns_S_R_R_GetRs1AndImm(varx, offs, tmpReg, &rs1, &imm);
 #ifdef DEBUG
     assert(tmpReg != codeGen->rsGetRsvdReg());
     emitIns_S_R_R_SanityCheck(ins, rs1, rs2);
@@ -415,6 +415,7 @@ void emitter::emitIns_R_S_SanityCheck(instruction ins, emitAttr attr, regNumber 
         case INS_fld:
             assert(isFloatReg(rd));
             assert(isGeneralRegister(rs1));
+            break;
         case INS_lea:
             assert(size == EA_8BYTE);
             break;
@@ -426,7 +427,7 @@ void emitter::emitIns_R_S_SanityCheck(instruction ins, emitAttr attr, regNumber 
 
 #endif // DEBUG
 
-void emitter::emitIns_R_S_GetRs1AndImm(int varx, int offs, regNumber* rs1, ssize_t* imm)
+int emitter::emitIns_R_S_GetRs1AndImm(int varx, int offs, regNumber* rs1, ssize_t* imm)
 {
     assert(offs >= 0);
 
@@ -442,8 +443,10 @@ void emitter::emitIns_R_S_GetRs1AndImm(int varx, int offs, regNumber* rs1, ssize
     return offs < 0 ? -offs - 8 : offs;
 }
 
-instrDesc* emitter::emitIns_R_S_GenLeaInstr(regNumber rd, regNumber rs1, emitAttr attr, ssize_t imm)
+emitter::instrDesc* emitter::emitIns_R_S_GenLeaInstr(regNumber rd, regNumber rs1, emitAttr attr, ssize_t imm)
 {
+    regNumber rsvdReg = codeGen->rsGetRsvdReg();
+
     instrDesc* id = NULL;
     if (isValidSimm12(imm))
     {
@@ -464,7 +467,10 @@ instrDesc* emitter::emitIns_R_S_GenLeaInstr(regNumber rd, regNumber rs1, emitAtt
     return id;
 }
 
-instrDesc* emitter::emitIns_R_S_GenIns(regNumber rd, regNumber rs1, emitAttr attr, ssize_t imm) {
+emitter::instrDesc* emitter::emitIns_R_S_GenIns(instruction ins, regNumber rd, regNumber rs1, emitAttr attr, ssize_t imm)
+{
+    regNumber rsvdReg = codeGen->rsGetRsvdReg();
+
     instrDesc* id = emitNewInstrCns(attr, LowerNBitsOfWord<12>(imm));
     id->idIns(ins);
     id->idReg1(rd);
@@ -475,7 +481,7 @@ instrDesc* emitter::emitIns_R_S_GenIns(regNumber rd, regNumber rs1, emitAttr att
     }
     emitIns_R_I(INS_lui, EA_PTRSIZE, rsvdReg, UpperNBitsOfWordSignExtend<20>(imm));
     emitIns_R_R_R(INS_add, EA_PTRSIZE, rsvdReg, rsvdReg, rs1);
-    id->rdReg2(rsvdReg);
+    id->idReg2(rsvdReg);
     return id;
 }
 
@@ -486,15 +492,14 @@ void emitter::emitIns_R_S(instruction ins, emitAttr attr, regNumber rd, int varx
 {
     ssize_t   imm;
     regNumber rs1;
-    emitIns_R_S_GetRs1AndImm(varx, offs, &rs1, &imm);
+    offs = emitIns_R_S_GetRs1AndImm(varx, offs, &rs1, &imm);
 
     emitAttr size = EA_SIZE(attr);
 
 #ifdef DEBUG
     emitIns_R_S_SanityCheck(ins, attr, rd, rs1);
 #endif
-    regNumber  rsvdReg = codeGen->rsGetRsvdReg();
-    instrDesc* id      = NULL;
+    instrDesc* id = NULL;
 
     if (ins == INS_lea)
     {
@@ -502,7 +507,7 @@ void emitter::emitIns_R_S(instruction ins, emitAttr attr, regNumber rd, int varx
     }
     else
     {
-        id = emitIns_R_S_GenIns(rd, rs1, attr, imm);
+        id = emitIns_R_S_GenIns(ins, rd, rs1, attr, imm);
     }
 
     id->idAddr()->iiaLclVar.initLclVarAddr(varx, offs);
