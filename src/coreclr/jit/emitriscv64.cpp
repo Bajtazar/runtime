@@ -3108,6 +3108,23 @@ BYTE* emitter::emitOutputInstr_OptsNone(BYTE* dst, const instrDesc* id, instruct
         printf("Retreived imm: %d\n", emitGetInsSC(id));
         switch (ins)
         {
+            // I-Type instructions
+            case INS_addi:
+            case INS_lb:
+            case INS_lbu:
+            case INS_lh:
+            case INS_lhu:
+            case INS_lw:
+            case INS_lwu:
+            case INS_ld:
+            case INS_flw:
+            case INS_fld:
+                dst += emitOutput_ITypeInstr(dst, ins, id->idReg1(), id->idReg2(), emitGetInsSC(id));
+                break;
+            // R-Type instrucions
+            case INS_add:
+                dst += emitOutput_RTypeInstr(dst, ins, id->idReg1(), id->idReg2(), id->idReg3());
+                break;
             // S-Type instructions
             case INS_sd:
             case INS_sw:
