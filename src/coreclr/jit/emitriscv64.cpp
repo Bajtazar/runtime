@@ -81,7 +81,7 @@ static ssize_t SignExtend(ssize_t word)
 template <uint8_t MaskSize>
 static ssize_t UpperNBitsOfWordSignExtend(ssize_t word)
 {
-    return UpperNBitsOfWord<31 - MaskSize>(SignExtend<MaskSize>(word));
+    return UpperNBitsOfWord<MaskSize>(SignExtend<31 - MaskSize>(word));
 }
 
 static ssize_t UpperWordOfDoubleWord(ssize_t immediate)
@@ -341,32 +341,32 @@ void emitter::emitIns_S_R_R_SanityCheck(instruction ins, regNumber reg1, regNumb
 
 #endif // DEBUG
 
-void emitter::emitIns_S_R_R(instruction ins, emitAttr attr, regNumber rs2, regNumber tmpReg, int varx, int offs)
+void emitter::emitIns_S_R_R_GetRs1AndImm(int varx, int offs, regNumber* rs1, ssize_t* imm)
 {
-    ssize_t imm;
-    assert(tmpReg != codeGen->rsGetRsvdReg());
-
-    emitAttr size = EA_SIZE(attr);
-
     /* Figure out the variable's frame position */
     bool FPbased;
     int  base = emitComp->lvaFrameAddress(varx, &FPbased);
 
     regNumber regBase = FPbased ? REG_FPBASE : REG_SPBASE;
-    regNumber rs1;
-
     if (tmpReg == REG_NA)
     {
-        rs1 = regBase;
-        imm = base + offs;
+        *rs1 = regBase;
+        *imm = base + offs;
     }
     else
     {
-        rs1 = tmpReg;
-        imm = offs;
+        *rs1 = tmpReg;
+        *imm = offs;
     }
+}
 
+void emitter::emitIns_S_R_R(instruction ins, emitAttr attr, regNumber rs2, regNumber tmpReg, int varx, int offs)
+{
+    ssize_t   imm;
+    regNumber rs1;
+    emitIns_S_R_R_GetRs1AndImm(varx, offs, &rs1, &imm);
 #ifdef DEBUG
+    assert(tmpReg != codeGen->rsGetRsvdReg());
     emitIns_S_R_R_SanityCheck(ins, rs1, rs2);
 #endif // DEBUG
 
@@ -380,7 +380,7 @@ void emitter::emitIns_S_R_R(instruction ins, emitAttr attr, regNumber rs2, regNu
         rs1 = codeGen->rsGetRsvdReg();
     }
 
-    instrDesc* id = emitNewInstrCns(attr, TrimSignedToImm12(imm));
+    instrDesc* id = emitNewInstrCns(attr, LowerNBitsOfWord<12>(imm));
 
     id->idIns(ins);
     id->idReg1(rs1);

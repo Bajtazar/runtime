@@ -60,6 +60,8 @@ private:
 void emitIns_S_R_R_SanityCheck(instruction ins, regNumber reg1, regNumber reg2);
 #endif // DEBUG
 
+void emitIns_S_R_R_GetRs1AndImm(int varx, int offs, regNumber* rs1, ssize_t* imm);
+
 bool emitInsIsLoad(instruction ins);
 bool emitInsIsStore(instruction ins);
 bool emitInsIsLoadOrStore(instruction ins);
