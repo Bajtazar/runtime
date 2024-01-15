@@ -144,6 +144,7 @@ BYTE* emitOutputInstr_OptsJalr28(BYTE* dst, const instrDescJmp* jmp, instruction
 BYTE* emitOutputInstr_OptsJCond(BYTE* dst, instrDesc* id, const insGroup* ig, instruction* ins);
 BYTE* emitOutputInstr_OptsJ(BYTE* dst, instrDesc* id, const insGroup* ig, instruction* ins);
 BYTE* emitOutputInstr_OptsC(BYTE* dst, instrDesc* id, const insGroup* ig, size_t* size);
+BYTE* emitOutputInstr_OptsNone(BYTE* dst, const instrDesc* id, instruction ins);
 
 static unsigned TrimSignedToImm12(int imm12);
 static unsigned TrimSignedToImm13(int imm13);

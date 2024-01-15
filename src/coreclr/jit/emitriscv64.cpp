@@ -316,8 +316,8 @@ void emitter::emitIns_S_R(instruction ins, emitAttr attr, regNumber reg1, int va
 
 void emitter::emitIns_S_R_R_SanityCheck(instruction ins, regNumber reg1, regNumber reg2)
 {
-    assert(reg1 != codeGen->rsGetRsvdReg());
-    assert((reg2 != REG_NA) && (reg2 != codeGen->rsGetRsvdReg()));
+    assert((reg1 != REG_NA) && (reg1 != codeGen->rsGetRsvdReg()));
+    assert(reg2 != codeGen->rsGetRsvdReg());
 
     switch (ins)
     {
@@ -3087,6 +3087,36 @@ BYTE* emitter::emitOutputInstr_OptsC(BYTE* dst, instrDesc* id, const insGroup* i
     return dst;
 }
 
+BYTE* emitter::emitOutputInstr_OptsNone(BYTE* dst, const instrDesc* id, instruction ins)
+{
+    // temp - new instructions
+    if (id->idInsSize() == 0)
+    {
+
+        switch (ins)
+        {
+            // S-Type instructions
+            case INS_sd:
+            case INS_sw:
+            case INS_sh:
+            case INS_sb:
+            case INS_fsd:
+            case INS_fsw:
+                dst += emitOutput_STypeInstr(dst, id->reg1(), id->reg2(), emitGetInsSC(id));
+                break;
+            default:
+                NO_WAY("illegal instruction within emitOutputInstr_OptsNone!");
+                break;
+        }
+    }
+    else
+    {
+        // old iiaGetInstrEncode style
+        dst += emitOutput_Instr(dst, id->idAddr()->iiaGetInstrEncode());
+    }
+    return dst;
+}
+
 /*****************************************************************************
  *
  *  Append the machine code corresponding to the given instruction descriptor
@@ -3143,10 +3173,13 @@ size_t emitter::emitOutputInstr(insGroup* ig, instrDesc* id, BYTE** dp)
             dst = emitOutputInstr_OptsC(dst, id, ig, &sz);
             ins = INS_nop;
             break;
-        default: // case INS_OPTS_NONE:
-            dst += emitOutput_Instr(dst, id->idAddr()->iiaGetInstrEncode());
+        case INS_OPTS_NONE:
             ins = id->idIns();
+            dst = emitOutputInstr_OptsNone(dst, id, ins);
             sz  = sizeof(instrDesc);
+            break;
+        default:
+            NO_WAY("invalid insopts inside emitOutputInstr!");
             break;
     }
 
