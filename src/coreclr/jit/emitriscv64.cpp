@@ -377,15 +377,15 @@ void emitter::emitIns_S_R_R(instruction ins, emitAttr attr, regNumber rs2, regNu
         emitIns_R_I(INS_lui, EA_PTRSIZE, codeGen->rsGetRsvdReg(), UpperNBitsOfWordSignExtend<20>(imm));
         emitIns_R_R_R(INS_add, EA_PTRSIZE, codeGen->rsGetRsvdReg(), codeGen->rsGetRsvdReg(), rs1);
 
-        imm = LowerNBitsOfWord<12>(imm);
         rs1 = codeGen->rsGetRsvdReg();
     }
 
-    instrDesc* id = emitNewInstrCns(attr, imm);
+    instrDesc* id = emitNewInstrCns(attr, TrimSignedToImm12(imm));
 
     id->idIns(ins);
     id->idReg1(rs1);
     id->idReg2(rs2);
+    id->idCodeSize(4);
     id->idInsOpt(INS_OPTS_NONE);
     id->idAddr()->iiaLclVar.initLclVarAddr(varx, offs);
     id->idSetIsLclVar();
@@ -3090,9 +3090,9 @@ BYTE* emitter::emitOutputInstr_OptsC(BYTE* dst, instrDesc* id, const insGroup* i
 BYTE* emitter::emitOutputInstr_OptsNone(BYTE* dst, const instrDesc* id, instruction ins)
 {
     // temp - new instructions
-    if (id->idCodeSize() == 0)
+    if (id->idAddr()->iiaGetInstrEncode() == 0)
     {
-
+        printf("Retreived imm: %d\n", emitGetInsSC(id));
         switch (ins)
         {
             // S-Type instructions
