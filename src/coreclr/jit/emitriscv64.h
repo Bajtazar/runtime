@@ -56,6 +56,11 @@ instrDesc* emitNewInstrCallInd(int              argCnt,
 /************************************************************************/
 
 private:
+
+#ifdef DEBUG
+void emitIns_S_R_R_SanityCheck(instruction ins, regNumber reg1, regNumber reg2);
+#endif // DEBUG
+
 bool emitInsIsLoad(instruction ins);
 bool emitInsIsStore(instruction ins);
 bool emitInsIsLoadOrStore(instruction ins);

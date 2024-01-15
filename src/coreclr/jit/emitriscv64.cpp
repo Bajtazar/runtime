@@ -70,12 +70,17 @@ static ssize_t MiddleNBitsOfWord(ssize_t word)
     return LowerNBitsOfWord<MaskSize>(word >> RangeBegin);
 }
 
+template <uint8_t Shift>
+static ssize_t SignExtend(ssize_t word) {
+    static constexpr unsigned kSignExtend = 1 << Shift;
+
+    return word + kSignExtend;
+}
+
 template <uint8_t MaskSize>
 static ssize_t UpperNBitsOfWordSignExtend(ssize_t word)
 {
-    static constexpr unsigned kSignExtend = 1 << (31 - MaskSize);
-
-    return UpperNBitsOfWord<MaskSize>(word + kSignExtend);
+    return UpperNBitsOfWord<31 - MaskSize>(SignExtend<MaskSize>(word));
 }
 
 static ssize_t UpperWordOfDoubleWord(ssize_t immediate)
@@ -102,9 +107,7 @@ static ssize_t DoubleWordSignExtend(ssize_t doubleWord)
 template <uint8_t UpperMaskSize>
 static ssize_t UpperWordOfDoubleWordSingleSignExtend(ssize_t doubleWord)
 {
-    static constexpr size_t kUpperSignExtend = static_cast<size_t>(1) << (31 - UpperMaskSize);
-
-    return UpperWordOfDoubleWord(doubleWord + kUpperSignExtend);
+    return UpperWordOfDoubleWord(SignExtend<31 - UpperMaskSize>(doubleWord));
 }
 
 template <uint8_t UpperMaskSize, uint8_t LowerMaskSize>
@@ -308,38 +311,43 @@ void emitter::emitIns_S_R(instruction ins, emitAttr attr, regNumber reg1, int va
     emitIns_S_R_R(ins, attr, reg1, REG_NA, varx, offs);
 }
 
-void emitter::emitIns_S_R_R(instruction ins, emitAttr attr, regNumber reg1, regNumber tmpReg, int varx, int offs)
-{
-    ssize_t imm;
-
-    assert(tmpReg != codeGen->rsGetRsvdReg());
-    assert(reg1 != codeGen->rsGetRsvdReg());
-
-    emitAttr size = EA_SIZE(attr);
-
 #ifdef DEBUG
-    switch (ins)
-    {
+
+void emitter::emitIns_S_R_R_SanityCheck(instruction ins, regNumber reg1, regNumber reg2) {
+    assert(reg1 != codeGen->rsGetRsvdReg());
+    assert((reg2 != REG_NA) && (reg2 != codeGen->rsGetRsvdReg()));
+
+    switch (ins) {
         case INS_sd:
         case INS_sw:
         case INS_sh:
         case INS_sb:
+            assert(isGeneralRegister(reg1));
+            assert(isGeneralRegisterOrR0(reg2));
+            break;
         case INS_fsd:
         case INS_fsw:
+            assert(isGeneralRegister(reg1));
+            assert(isFloatReg(reg2));
             break;
-
         default:
-            NYI_RISCV64("illegal ins within emitIns_S_R_R!");
-            return;
+            NO_WAY("illegal ins within emitIns_S_R_R!");
+            break;
+    }
+}
 
-    } // end switch (ins)
-#endif
+#endif // DEBUG
+
+void emitter::emitIns_S_R_R(instruction ins, emitAttr attr, regNumber reg1, regNumber tmpReg, int varx, int offs)
+{
+    ssize_t imm;
+    assert(tmpReg != codeGen->rsGetRsvdReg());
+
+    emitAttr size = EA_SIZE(attr);
 
     /* Figure out the variable's frame position */
-    int  base;
     bool FPbased;
-
-    base = emitComp->lvaFrameAddress(varx, &FPbased);
+    int base = emitComp->lvaFrameAddress(varx, &FPbased);
 
     regNumber regBase = FPbased ? REG_FPBASE : REG_SPBASE;
     regNumber reg2;
@@ -355,18 +363,17 @@ void emitter::emitIns_S_R_R(instruction ins, emitAttr attr, regNumber reg1, regN
         imm  = offs;
     }
 
-    assert(reg2 != REG_NA && reg2 != codeGen->rsGetRsvdReg());
+#ifdef DEBUG
+    emitIns_S_R_R_SanityCheck(ins, reg1, reg2);
+#endif // DEBUG
 
-    if (!isValidSimm12(imm))
-    {
-        // If immediate does not fit to store immediate 12 bits, construct necessary value in rsRsvdReg()
-        // and keep tmpReg hint value unchanged.
-        assert(isValidSimm20((imm + 0x800) >> 12));
+    if (!isValidSimm12(imm)) {
+        assert(isValidSimm32(imm));
 
-        emitIns_R_I(INS_lui, EA_PTRSIZE, codeGen->rsGetRsvdReg(), (imm + 0x800) >> 12);
+        emitIns_R_I(INS_lui, EA_PTRSIZE, codeGen->rsGetRsvdReg(), UpperNBitsOfWordSignExtend<20>(imm));
         emitIns_R_R_R(INS_add, EA_PTRSIZE, codeGen->rsGetRsvdReg(), codeGen->rsGetRsvdReg(), reg2);
 
-        imm  = imm & 0xfff;
+        imm = LowerNBitsOfWord<12>(imm);
         reg2 = codeGen->rsGetRsvdReg();
     }
 
