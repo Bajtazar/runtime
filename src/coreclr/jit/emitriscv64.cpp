@@ -395,10 +395,12 @@ void emitter::emitIns_S_R_R(instruction ins, emitAttr attr, regNumber rs2, regNu
 
 #ifdef DEBUG
 
-void emitter::emitIns_R_S_SanityCheck(instruction ins, emitAttr attr, regNumber rd, regNumber rs1) {
+void emitter::emitIns_R_S_SanityCheck(instruction ins, emitAttr attr, regNumber rd, regNumber rs1)
+{
     emitAttr size = EA_SIZE(attr);
 
-    switch (ins) {
+    switch (ins)
+    {
         case INS_lb:
         case INS_lbu:
         case INS_lh:
@@ -424,17 +426,57 @@ void emitter::emitIns_R_S_SanityCheck(instruction ins, emitAttr attr, regNumber 
 
 #endif // DEBUG
 
-void emitter::emitIns_R_S_GetRs1AndImm(int varx, int offs, regNumber* rs1, ssize_t* imm) {
+void emitter::emitIns_R_S_GetRs1AndImm(int varx, int offs, regNumber* rs1, ssize_t* imm)
+{
     assert(offs >= 0);
 
     /* Figure out the variable's frame position */
     bool FPbased;
-    int base = emitComp->lvaFrameAddress(varx, &FPbased);
-    *imm  = offs < 0 ? -offs - 8 : base + offs;
+    int  base = emitComp->lvaFrameAddress(varx, &FPbased);
+    *imm      = offs < 0 ? -offs - 8 : base + offs;
+
+    assert(isValidSimm32(*imm));
 
     *rs1 = FPbased ? REG_FPBASE : REG_SPBASE;
 
     return offs < 0 ? -offs - 8 : offs;
+}
+
+instrDesc* emitter::emitIns_R_S_GenLeaInstr(regNumber rd, regNumber rs1, emitAttr attr, ssize_t imm)
+{
+    instrDesc* id = NULL;
+    if (isValidSimm12(imm))
+    {
+        id = emitNewInstrCns(attr, TrimSignedToImm12(imm));
+        id->idIns(INS_addi);
+    }
+    else
+    {
+        emitIns_R_I(INS_lui, EA_PTRSIZE, rsvdReg, UpperNBitsOfWordSignExtend<20>(imm));
+        emitIns_R_R_I(INS_addi, EA_PTRSIZE, rsvdReg, rsvdReg, LowerNBitsOfWord<12>(imm));
+
+        id = emitNewInstr(attr);
+        id->idIns(INS_add);
+        id->idReg3(rsvdReg);
+    }
+    id->idReg1(rd);
+    id->idReg2(rs1);
+    return id;
+}
+
+instrDesc* emitter::emitIns_R_S_GenIns(regNumber rd, regNumber rs1, emitAttr attr, ssize_t imm) {
+    instrDesc* id = emitNewInstrCns(attr, LowerNBitsOfWord<12>(imm));
+    id->idIns(ins);
+    id->idReg1(rd);
+    if (isValidSimm12(imm))
+    {
+        id->idReg2(rs1);
+        return id;
+    }
+    emitIns_R_I(INS_lui, EA_PTRSIZE, rsvdReg, UpperNBitsOfWordSignExtend<20>(imm));
+    emitIns_R_R_R(INS_add, EA_PTRSIZE, rsvdReg, rsvdReg, rs1);
+    id->rdReg2(rsvdReg);
+    return id;
 }
 
 /*
@@ -442,7 +484,7 @@ void emitter::emitIns_R_S_GetRs1AndImm(int varx, int offs, regNumber* rs1, ssize
  */
 void emitter::emitIns_R_S(instruction ins, emitAttr attr, regNumber rd, int varx, int offs)
 {
-    ssize_t imm;
+    ssize_t   imm;
     regNumber rs1;
     emitIns_R_S_GetRs1AndImm(varx, offs, &rs1, &imm);
 
@@ -451,57 +493,18 @@ void emitter::emitIns_R_S(instruction ins, emitAttr attr, regNumber rd, int varx
 #ifdef DEBUG
     emitIns_R_S_SanityCheck(ins, attr, rd, rs1);
 #endif
+    regNumber  rsvdReg = codeGen->rsGetRsvdReg();
+    instrDesc* id      = NULL;
 
-    reg1 = (regNumber)((char)reg1 & 0x1f);
-    code_t code;
-    if ((-2048 <= imm) && (imm < 2048))
+    if (ins == INS_lea)
     {
-        if (ins == INS_lea)
-        {
-            ins = INS_addi;
-        }
-        code = emitInsCode(ins);
-        code |= (code_t)reg1 << 7;
-        code |= (code_t)reg2 << 15;
-        code |= (imm & 0xfff) << 20;
+        id = emitIns_R_S_GenLeaInstr(rd, rs1, attr, imm);
     }
     else
     {
-        if (ins == INS_lea)
-        {
-            assert(isValidSimm20((imm + 0x800) >> 12));
-            emitIns_R_I(INS_lui, EA_PTRSIZE, codeGen->rsGetRsvdReg(), (imm + 0x800) >> 12);
-            ssize_t imm2 = imm & 0xfff;
-            emitIns_R_R_I(INS_addi, EA_PTRSIZE, codeGen->rsGetRsvdReg(), codeGen->rsGetRsvdReg(), imm2);
-
-            ins  = INS_add;
-            code = emitInsCode(ins);
-            code |= (code_t)reg1 << 7;
-            code |= (code_t)reg2 << 15;
-            code |= (code_t)codeGen->rsGetRsvdReg() << 20;
-        }
-        else
-        {
-            assert(isValidSimm20((imm + 0x800) >> 12));
-            emitIns_R_I(INS_lui, EA_PTRSIZE, codeGen->rsGetRsvdReg(), (imm + 0x800) >> 12);
-
-            emitIns_R_R_R(INS_add, EA_PTRSIZE, codeGen->rsGetRsvdReg(), codeGen->rsGetRsvdReg(), reg2);
-
-            ssize_t imm2 = imm & 0xfff;
-            code         = emitInsCode(ins);
-            code |= (code_t)reg1 << 7;
-            code |= (code_t)codeGen->rsGetRsvdReg() << 15;
-            code |= (code_t)(imm2 & 0xfff) << 20;
-        }
+        id = emitIns_R_S_GenIns(rd, rs1, attr, imm);
     }
 
-    instrDesc* id = emitNewInstr(attr);
-
-    id->idReg1(reg1);
-
-    id->idIns(ins);
-
-    id->idAddr()->iiaSetInstrEncode(code);
     id->idAddr()->iiaLclVar.initLclVarAddr(varx, offs);
     id->idSetIsLclVar();
     id->idCodeSize(4);
