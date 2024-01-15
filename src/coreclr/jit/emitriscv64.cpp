@@ -71,7 +71,8 @@ static ssize_t MiddleNBitsOfWord(ssize_t word)
 }
 
 template <uint8_t Shift>
-static ssize_t SignExtend(ssize_t word) {
+static ssize_t SignExtend(ssize_t word)
+{
     static constexpr unsigned kSignExtend = 1 << Shift;
 
     return word + kSignExtend;
@@ -313,11 +314,13 @@ void emitter::emitIns_S_R(instruction ins, emitAttr attr, regNumber reg1, int va
 
 #ifdef DEBUG
 
-void emitter::emitIns_S_R_R_SanityCheck(instruction ins, regNumber reg1, regNumber reg2) {
+void emitter::emitIns_S_R_R_SanityCheck(instruction ins, regNumber reg1, regNumber reg2)
+{
     assert(reg1 != codeGen->rsGetRsvdReg());
     assert((reg2 != REG_NA) && (reg2 != codeGen->rsGetRsvdReg()));
 
-    switch (ins) {
+    switch (ins)
+    {
         case INS_sd:
         case INS_sw:
         case INS_sh:
@@ -338,7 +341,7 @@ void emitter::emitIns_S_R_R_SanityCheck(instruction ins, regNumber reg1, regNumb
 
 #endif // DEBUG
 
-void emitter::emitIns_S_R_R(instruction ins, emitAttr attr, regNumber reg1, regNumber tmpReg, int varx, int offs)
+void emitter::emitIns_S_R_R(instruction ins, emitAttr attr, regNumber rs2, regNumber tmpReg, int varx, int offs)
 {
     ssize_t imm;
     assert(tmpReg != codeGen->rsGetRsvdReg());
@@ -347,54 +350,45 @@ void emitter::emitIns_S_R_R(instruction ins, emitAttr attr, regNumber reg1, regN
 
     /* Figure out the variable's frame position */
     bool FPbased;
-    int base = emitComp->lvaFrameAddress(varx, &FPbased);
+    int  base = emitComp->lvaFrameAddress(varx, &FPbased);
 
     regNumber regBase = FPbased ? REG_FPBASE : REG_SPBASE;
-    regNumber reg2;
+    regNumber rs1;
 
     if (tmpReg == REG_NA)
     {
-        reg2 = regBase;
-        imm  = base + offs;
+        rs1 = regBase;
+        imm = base + offs;
     }
     else
     {
-        reg2 = tmpReg;
-        imm  = offs;
+        rs1 = tmpReg;
+        imm = offs;
     }
 
 #ifdef DEBUG
-    emitIns_S_R_R_SanityCheck(ins, reg1, reg2);
+    emitIns_S_R_R_SanityCheck(ins, rs1, rs2);
 #endif // DEBUG
 
-    if (!isValidSimm12(imm)) {
+    if (!isValidSimm12(imm))
+    {
         assert(isValidSimm32(imm));
 
         emitIns_R_I(INS_lui, EA_PTRSIZE, codeGen->rsGetRsvdReg(), UpperNBitsOfWordSignExtend<20>(imm));
         emitIns_R_R_R(INS_add, EA_PTRSIZE, codeGen->rsGetRsvdReg(), codeGen->rsGetRsvdReg(), reg2);
 
         imm = LowerNBitsOfWord<12>(imm);
-        reg2 = codeGen->rsGetRsvdReg();
+        rs1 = codeGen->rsGetRsvdReg();
     }
 
-    instrDesc* id = emitNewInstr(attr);
-
-    id->idReg1(reg1);
-
-    id->idReg2(reg2);
+    instrDesc* id = emitNewInstrCns(attr, imm);
 
     id->idIns(ins);
-
-    assert(isGeneralRegister(reg2));
-    code_t code = emitInsCode(ins);
-    code |= (code_t)(reg1 & 0x1f) << 20;
-    code |= (code_t)reg2 << 15;
-    code |= (((imm >> 5) & 0x7f) << 25) | ((imm & 0x1f) << 7);
-
-    id->idAddr()->iiaSetInstrEncode(code);
+    id->idReg1(rs1);
+    id->idReg2(rs2);
+    id->idInsOpt(INS_OPTS_NONE);
     id->idAddr()->iiaLclVar.initLclVarAddr(varx, offs);
     id->idSetIsLclVar();
-    id->idCodeSize(4);
 
     appendToCurIG(id);
 }
