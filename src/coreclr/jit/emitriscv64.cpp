@@ -401,6 +401,9 @@ void emitter::emitIns_R_S_SanityCheck(instruction ins, emitAttr attr, regNumber 
 
     switch (ins)
     {
+        case INS_lea:
+            assert(size == EA_8BYTE);
+            FALLTHROUGH;
         case INS_lb:
         case INS_lbu:
         case INS_lh:
@@ -415,9 +418,6 @@ void emitter::emitIns_R_S_SanityCheck(instruction ins, emitAttr attr, regNumber 
         case INS_fld:
             assert(isFloatReg(rd));
             assert(isGeneralRegister(rs1));
-            break;
-        case INS_lea:
-            assert(size == EA_8BYTE);
             break;
         default:
             NO_WAY("illegal ins within emitIns_R_S!");
@@ -467,7 +467,8 @@ emitter::instrDesc* emitter::emitIns_R_S_GenLeaInstr(regNumber rd, regNumber rs1
     return id;
 }
 
-emitter::instrDesc* emitter::emitIns_R_S_GenIns(instruction ins, regNumber rd, regNumber rs1, emitAttr attr, ssize_t imm)
+emitter::instrDesc* emitter::emitIns_R_S_GenIns(
+    instruction ins, regNumber rd, regNumber rs1, emitAttr attr, ssize_t imm)
 {
     regNumber rsvdReg = codeGen->rsGetRsvdReg();
 
