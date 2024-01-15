@@ -3102,7 +3102,7 @@ BYTE* emitter::emitOutputInstr_OptsNone(BYTE* dst, const instrDesc* id, instruct
             case INS_sb:
             case INS_fsd:
             case INS_fsw:
-                dst += emitOutput_STypeInstr(dst, id->reg1(), id->reg2(), emitGetInsSC(id));
+                dst += emitOutput_STypeInstr(dst, ins, id->idReg1(), id->idReg2(), emitGetInsSC(id));
                 break;
             default:
                 NO_WAY("illegal instruction within emitOutputInstr_OptsNone!");
