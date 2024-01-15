@@ -375,7 +375,7 @@ void emitter::emitIns_S_R_R(instruction ins, emitAttr attr, regNumber rs2, regNu
         assert(isValidSimm32(imm));
 
         emitIns_R_I(INS_lui, EA_PTRSIZE, codeGen->rsGetRsvdReg(), UpperNBitsOfWordSignExtend<20>(imm));
-        emitIns_R_R_R(INS_add, EA_PTRSIZE, codeGen->rsGetRsvdReg(), codeGen->rsGetRsvdReg(), reg2);
+        emitIns_R_R_R(INS_add, EA_PTRSIZE, codeGen->rsGetRsvdReg(), codeGen->rsGetRsvdReg(), rs1);
 
         imm = LowerNBitsOfWord<12>(imm);
         rs1 = codeGen->rsGetRsvdReg();
@@ -3090,7 +3090,7 @@ BYTE* emitter::emitOutputInstr_OptsC(BYTE* dst, instrDesc* id, const insGroup* i
 BYTE* emitter::emitOutputInstr_OptsNone(BYTE* dst, const instrDesc* id, instruction ins)
 {
     // temp - new instructions
-    if (id->idInsSize() == 0)
+    if (id->idCodeSize() == 0)
     {
 
         switch (ins)
