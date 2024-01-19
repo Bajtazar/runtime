@@ -937,7 +937,7 @@ protected:
 // TODO-Cleanup: We should really add a DEBUG-only tag to this union so we can add asserts
 // about reading what we think is here, to avoid unexpected corruption issues.
 
-#if !defined(TARGET_ARM64) && !defined(TARGET_LOONGARCH64)
+#if !defined(TARGET_ARM64) && !defined(TARGET_LOONGARCH64) && !defined(TARGET_RISCV64)
             emitLclVarAddr iiaLclVar;
 #endif
             BasicBlock* iiaBBlabel;
@@ -1025,8 +1025,14 @@ protected:
 #elif defined(TARGET_RISCV64)
             struct
             {
+                emitLclVarAddr iiaLclVar;
+                unsigned char   base : 2;
                 regNumber    _idReg3 : REGNUM_BITS;
                 regNumber    _idReg4 : REGNUM_BITS;
+            };
+
+            struct {
+                unsigned int reserved;
                 unsigned int iiaEncodedInstr; // instruction's binary encoding.
             };
 

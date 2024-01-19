@@ -390,6 +390,8 @@ void emitter::emitIns_S_R_R(instruction ins, emitAttr attr, regNumber rs2, regNu
     id->idAddr()->iiaLclVar.initLclVarAddr(varx, offs);
     id->idSetIsLclVar();
 
+    id->idAddr()->base = 0;
+
     appendToCurIG(id);
 }
 
@@ -495,8 +497,6 @@ void emitter::emitIns_R_S(instruction ins, emitAttr attr, regNumber rd, int varx
     regNumber rs1;
     offs = emitIns_R_S_GetRs1AndImm(varx, offs, &rs1, &imm);
 
-    emitAttr size = EA_SIZE(attr);
-
 #ifdef DEBUG
     emitIns_R_S_SanityCheck(ins, attr, rd, rs1);
 #endif
@@ -513,7 +513,10 @@ void emitter::emitIns_R_S(instruction ins, emitAttr attr, regNumber rd, int varx
 
     id->idAddr()->iiaLclVar.initLclVarAddr(varx, offs);
     id->idSetIsLclVar();
+    id->idInsOpt(INS_OPTS_NONE);
     id->idCodeSize(4);
+
+    id->idAddr()->base = 0;
 
     appendToCurIG(id);
 }
@@ -3109,9 +3112,8 @@ BYTE* emitter::emitOutputInstr_OptsC(BYTE* dst, instrDesc* id, const insGroup* i
 BYTE* emitter::emitOutputInstr_OptsNone(BYTE* dst, const instrDesc* id, instruction ins)
 {
     // temp - new instructions
-    if (id->idAddr()->iiaGetInstrEncode() == 0)
+    if (id->idAddr()->base != 0x03)
     {
-        printf("Retreived imm: %d\n", emitGetInsSC(id));
         switch (ins)
         {
             // I-Type instructions
@@ -4358,6 +4360,7 @@ void emitter::emitDispInsName(
             return;
         }
         default:
+            printf("INS code: %d\n", code);
             NO_WAY("illegal ins within emitDisInsName!");
     }
 
