@@ -578,6 +578,24 @@ void emitter::emitIns_I_I(instruction ins, emitAttr attr, ssize_t cc, ssize_t of
     NYI_RISCV64("emitIns_I_I-----unimplemented/unused on RISCV64 yet----");
 }
 
+#ifdef DEBUG
+
+void emitter::emitIns_R_I_SanityCheck(instruction ins, regNumber reg)
+{
+    switch (ins)
+    {
+        case INS_lui:
+        case INS_auipc:
+            assert(isGeneralRegister(reg));
+            break;
+        default:
+            NO_WAY("illegal ins within emitIns_R_I!");
+            break;
+    }
+}
+
+#endif // DEBUG
+
 /*****************************************************************************
  *
  *  Add an instruction referencing a register and a constant.
@@ -585,30 +603,17 @@ void emitter::emitIns_I_I(instruction ins, emitAttr attr, ssize_t cc, ssize_t of
 
 void emitter::emitIns_R_I(instruction ins, emitAttr attr, regNumber reg, ssize_t imm, insOpts opt /* = INS_OPTS_NONE */)
 {
-    code_t code = emitInsCode(ins);
+#ifdef DEBUG
+    emitIns_R_I_SanityCheck(ins, reg);
+#endif // DEBUG
 
-    switch (ins)
-    {
-        case INS_lui:
-        case INS_auipc:
-            assert(reg != REG_R0);
-            assert(isGeneralRegister(reg));
-            assert((((size_t)imm) >> 20) == 0);
-
-            code |= reg << 7;
-            code |= (imm & 0xfffff) << 12;
-            break;
-        default:
-            NO_WAY("illegal ins within emitIns_R_I!");
-            break;
-    } // end switch (ins)
-
-    instrDesc* id = emitNewInstr(attr);
+    instrDesc* id = emitNewInstrCns(attr, TrimSignedToImm20(imm));
 
     id->idIns(ins);
     id->idReg1(reg);
-    id->idAddr()->iiaSetInstrEncode(code);
     id->idCodeSize(4);
+
+    id->idAddr()->base = 0;
 
     appendToCurIG(id);
 }
@@ -3177,6 +3182,11 @@ BYTE* emitter::emitOutputInstr_OptsNone(BYTE* dst, const instrDesc* id, instruct
     {
         switch (ins)
         {
+            // U-Type instructions
+            case INS_lui:
+            case INS_auipc:
+                dst += emitOutput_UTypeInstr(dst, ins, id->idReg1(), emitGetInsSC(id));
+                break;
             // I-Type instructions
             case INS_addi:
             case INS_lb:
