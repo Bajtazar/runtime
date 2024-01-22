@@ -59,6 +59,7 @@ private:
 #ifdef DEBUG
 void emitIns_S_R_R_SanityCheck(instruction ins, regNumber reg1, regNumber reg2);
 void emitIns_R_S_SanityCheck(instruction ins, emitAttr attr, regNumber rd, regNumber rs1);
+void emitIns_I_SanityCheck(instruction ins, ssize_t immediate);
 #endif // DEBUG
 
 void emitIns_S_R_R_GetRs1AndImm(int varx, int offs, regNumber tmpReg, regNumber* rs1, ssize_t* imm);

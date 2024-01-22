@@ -65,6 +65,7 @@ INST(or,            "or",             0,    0x00006033)
 INST(and,           "and",            0,    0x00007033)
 
 INST(fence,         "fence",          0,    0x0000000f)
+INST(fence_tso,     "fence.tso",      0,    0x0000000f)
 INST(fence_i,       "fence.i",        0,    0x0000100f)
 
 //// R_I_R

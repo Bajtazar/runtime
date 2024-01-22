@@ -522,6 +522,26 @@ void emitter::emitIns_R_S(instruction ins, emitAttr attr, regNumber rd, int varx
     appendToCurIG(id);
 }
 
+#ifdef DEBUG
+void emitter::emitIns_I_SanityCheck(instruction ins, ssize_t immediate)
+{
+    switch (ins)
+    {
+        case INS_fence:
+        {
+            ssize_t fmField = immediate >> 8;
+            assert((fmField & 0x7) == 0); // Fm field can only be 0b1000 and 0b0000
+        }
+        break;
+        case INS_j:
+            break;
+        default:
+            NO_WAY("illegal ins within emitIns_I!");
+            break;
+    }
+}
+#endif // DEBUG
+
 /*****************************************************************************
  *
  *  Add an instruction with a single immediate value.
@@ -529,29 +549,31 @@ void emitter::emitIns_R_S(instruction ins, emitAttr attr, regNumber rd, int varx
 
 void emitter::emitIns_I(instruction ins, emitAttr attr, ssize_t imm)
 {
-    code_t code = emitInsCode(ins);
+    instrDesc* id = nullptr;
 
+#ifdef DEBUG
+    emitIns_I_SanityCheck(ins, imm);
+#endif
     switch (ins)
     {
-        case INS_fence:
-            code |= ((imm & 0xff) << 20);
+        case INS_fence: // rd and rs1 are unused
+            id = emitNewInstrCns(attr, TrimSignedToImm12(imm));
+            id->idReg1(REG_ZERO);
+            id->idReg2(REG_ZERO);
             break;
         case INS_j:
-            assert(imm >= -1048576 && imm < 1048576);
-            code |= ((imm >> 12) & 0xff) << 12;
-            code |= ((imm >> 11) & 0x1) << 20;
-            code |= ((imm >> 1) & 0x3ff) << 21;
-            code |= ((imm >> 20) & 0x1) << 31;
+            id = emitNewInstrCns(attr, TrimSignedToImm13(imm));
+            id->idReg1(REG_ZERO);
             break;
         default:
-            NO_WAY("illegal ins within emitIns_I!");
+            unreached();
     }
 
-    instrDesc* id = emitNewInstr(attr);
-
     id->idIns(ins);
-    id->idAddr()->iiaSetInstrEncode(code);
+    id->idInsOpt(INS_OPTS_NONE);
     id->idCodeSize(4);
+
+    id->idAddr()->base = 0;
 
     appendToCurIG(id);
 }
