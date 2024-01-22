@@ -562,7 +562,7 @@ void emitter::emitIns_I(instruction ins, emitAttr attr, ssize_t imm)
             id->idReg2(REG_ZERO);
             break;
         case INS_j:
-            id = emitNewInstrCns(attr, TrimSignedToImm13(imm));
+            id = emitNewInstrCns(attr, TrimSignedToImm21(imm));
             id->idReg1(REG_ZERO);
             break;
         default:
@@ -2502,6 +2502,14 @@ static constexpr unsigned kInstructionFunct7Mask = 0xfe000000;
             assert(rs1 < 32);
             assert((opcode & kInstructionFunct7Mask) == 0);
             break;
+        case INS_fence:
+        {
+            assert(rd == REG_ZERO);
+            assert(rs1 == REG_ZERO);
+            ssize_t fm = immediate >> 8;
+            assert((fm & 0x7) == 0);
+        }
+        break;
         default:
             NO_WAY("Illegal ins within emitOutput_ITypeInstr!");
             break;
@@ -3150,6 +3158,7 @@ BYTE* emitter::emitOutputInstr_OptsNone(BYTE* dst, const instrDesc* id, instruct
             case INS_ld:
             case INS_flw:
             case INS_fld:
+            case INS_fence:
                 dst += emitOutput_ITypeInstr(dst, ins, id->idReg1(), id->idReg2(), emitGetInsSC(id));
                 break;
             // R-Type instrucions
@@ -3164,6 +3173,10 @@ BYTE* emitter::emitOutputInstr_OptsNone(BYTE* dst, const instrDesc* id, instruct
             case INS_fsd:
             case INS_fsw:
                 dst += emitOutput_STypeInstr(dst, ins, id->idReg1(), id->idReg2(), emitGetInsSC(id));
+                break;
+            // J-Type instrunctions
+            case INS_j:
+                dst += emitOutput_JTypeInstr(dst, ins, id->idReg1(), emitGetInsSC(id));
                 break;
             default:
                 NO_WAY("illegal instruction within emitOutputInstr_OptsNone!");
