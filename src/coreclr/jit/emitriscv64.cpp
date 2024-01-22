@@ -1223,61 +1223,49 @@ void emitter::emitIns_J_R(instruction ins, emitAttr attr, BasicBlock* dst, regNu
 
 void emitter::emitIns_J(instruction ins, BasicBlock* dst, int instrCount)
 {
-    if (dst != nullptr) {
-        assert(dst->HasFlag(BBF_HAS_LABEL));
-    } else {
-        assert(instrCount != 0);
-
-        switch (ins) {
-            case INS_j:
-                {
-                    instrDesc* id = emitNewInstrCns(EA_PTRSIZE, TrimSignedToImm21(instrCount));
-                    id->idIns(ins);
-                    id->idReg1(REG_ZERO);
-                    id->idInsOpt(INS_OPTS_NONE);
-                    id->idCodeSize(4);
-
-                    id->idAddr()->base = 0;
-
-                    appendToCurIG(id);
-                }
-                break;
-            default:
-                NO_WAY("Illegal instruction within emitIns_J!");
-                break;
-        }
-        return;
-    }
-
-    //
-    // INS_OPTS_J: placeholders.  1-ins: if the dst outof-range will be replaced by INS_OPTS_JALR.
-    // jal/j/jalr/bnez/beqz/beq/bne/blt/bge/bltu/bgeu dst
-
-
+    assert((INS_jal <= ins) && (ins <= INS_bgeu)); // Change with sanity check
 
     instrDescJmp* id = emitNewInstrJmp();
-    assert((INS_jal <= ins) && (ins <= INS_bgeu));
+
     id->idIns(ins);
-    id->idReg1((regNumber)(instrCount & 0x1f));
-    id->idReg2((regNumber)((instrCount >> 5) & 0x1f));
 
-    id->idInsOpt(INS_OPTS_J);
-    emitCounts_INS_OPTS_J++;
-    id->idAddr()->iiaBBlabel = dst;
-
-    if (emitComp->opts.compReloc)
+    if (dst != nullptr)
     {
-        id->idSetIsDspReloc();
+        assert(dst->HasFlag(BBF_HAS_LABEL));
+
+        id->idjShort = false;
+
+        // TODO-RISCV64: maybe deleted this.
+        id->idjKeepLong = emitComp->fgInDifferentRegions(emitComp->compCurBB, dst);
+#ifdef DEBUG
+        if (emitComp->opts.compLongAddress) // Force long branches
+            id->idjKeepLong = true;
+#endif // DEBUG
+
+        id->idAddr()->iiaBBlabel = dst;
+
+        // @TODO - remove this
+        id->idReg1((regNumber)(instrCount & 0x1f));
+        id->idReg2((regNumber)((instrCount >> 5) & 0x1f));
+
+        if (emitComp->opts.compReloc)
+        {
+            id->idSetIsDspReloc();
+        }
+    }
+    else
+    {
+        assert(instrCount != 0);
+
+        id->idAddr()->iiaSetInstrCount(instrCount);
+        id->idjKeepLong = false;
+        id->idSetIsBound();
     }
 
-    id->idjShort = false;
+    id->idInsOpt(INS_OPTS_J);
+    id->idCodeSize(4);
 
-    // TODO-RISCV64: maybe deleted this.
-    id->idjKeepLong = emitComp->fgInDifferentRegions(emitComp->compCurBB, dst);
-#ifdef DEBUG
-    if (emitComp->opts.compLongAddress) // Force long branches
-        id->idjKeepLong = 1;
-#endif // DEBUG
+    ++emitCounts_INS_OPTS_J;
 
     /* Record the jump's IG and offset within it */
     id->idjIG   = emitCurIG;
@@ -1290,8 +1278,6 @@ void emitter::emitIns_J(instruction ins, BasicBlock* dst, int instrCount)
 #if EMITTER_STATS
     emitTotalIGjmps++;
 #endif
-
-    id->idCodeSize(4);
 
     appendToCurIG(id);
 }
@@ -3195,11 +3181,9 @@ BYTE* emitter::emitOutputInstr_OptsNone(BYTE* dst, const instrDesc* id, instruct
             case INS_fsw:
                 dst += emitOutput_STypeInstr(dst, ins, id->idReg1(), id->idReg2(), emitGetInsSC(id));
                 break;
-            // J-Type instrunctions
-            case INS_j:
-                dst += emitOutput_JTypeInstr(dst, ins, id->idReg1(), emitGetInsSC(id));
-                break;
             default:
+                // J-Type instrunctions can only be generated via emitIns_J* functions
+                // thus they should not be evalutated in here
                 NO_WAY("illegal instruction within emitOutputInstr_OptsNone!");
                 break;
         }
