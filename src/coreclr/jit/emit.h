@@ -1026,12 +1026,13 @@ protected:
             struct
             {
                 emitLclVarAddr iiaLclVar;
-                unsigned char   base : 2;
-                regNumber    _idReg3 : REGNUM_BITS;
-                regNumber    _idReg4 : REGNUM_BITS;
+                unsigned char  base : 2;
+                regNumber      _idReg3 : REGNUM_BITS;
+                regNumber      _idReg4 : REGNUM_BITS;
             };
 
-            struct {
+            struct
+            {
                 unsigned int reserved;
                 unsigned int iiaEncodedInstr; // instruction's binary encoding.
             };

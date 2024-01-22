@@ -474,17 +474,18 @@ emitter::instrDesc* emitter::emitIns_R_S_GenIns(
 {
     regNumber rsvdReg = codeGen->rsGetRsvdReg();
 
+    if (!isValidSimm12(imm))
+    {
+        emitIns_R_I(INS_lui, EA_PTRSIZE, rsvdReg, UpperNBitsOfWordSignExtend<20>(imm));
+        emitIns_R_R_R(INS_add, EA_PTRSIZE, rsvdReg, rsvdReg, rs1);
+
+        rs1 = rsvdReg;
+    }
+
     instrDesc* id = emitNewInstrCns(attr, LowerNBitsOfWord<12>(imm));
     id->idIns(ins);
     id->idReg1(rd);
-    if (isValidSimm12(imm))
-    {
-        id->idReg2(rs1);
-        return id;
-    }
-    emitIns_R_I(INS_lui, EA_PTRSIZE, rsvdReg, UpperNBitsOfWordSignExtend<20>(imm));
-    emitIns_R_R_R(INS_add, EA_PTRSIZE, rsvdReg, rsvdReg, rs1);
-    id->idReg2(rsvdReg);
+    id->idReg2(rs1);
     return id;
 }
 
@@ -500,7 +501,7 @@ void emitter::emitIns_R_S(instruction ins, emitAttr attr, regNumber rd, int varx
 #ifdef DEBUG
     emitIns_R_S_SanityCheck(ins, attr, rd, rs1);
 #endif
-    instrDesc* id = NULL;
+    instrDesc* id = nullptr;
 
     if (ins == INS_lea)
     {
