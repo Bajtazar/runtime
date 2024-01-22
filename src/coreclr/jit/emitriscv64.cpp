@@ -556,7 +556,6 @@ void emitter::emitIns_I(instruction ins, emitAttr attr, ssize_t imm)
     {
         case INS_fence: // rd and rs1 are unused
             id = emitNewInstrCns(attr, TrimSignedToImm12(imm));
-
             id->idReg1(REG_ZERO);
             id->idReg2(REG_ZERO);
             break;
@@ -598,16 +597,6 @@ void emitter::emitIns_R_I(instruction ins, emitAttr attr, regNumber reg, ssize_t
 
             code |= reg << 7;
             code |= (imm & 0xfffff) << 12;
-            break;
-        case INS_jal:
-            assert(isGeneralRegisterOrR0(reg));
-            assert(isValidSimm21(imm));
-
-            code |= reg << 7;
-            code |= ((imm >> 12) & 0xff) << 12;
-            code |= ((imm >> 11) & 0x1) << 20;
-            code |= ((imm >> 1) & 0x3ff) << 21;
-            code |= ((imm >> 20) & 0x1) << 31;
             break;
         default:
             NO_WAY("illegal ins within emitIns_R_I!");
@@ -1221,6 +1210,39 @@ void emitter::emitIns_J_R(instruction ins, emitAttr attr, BasicBlock* dst, regNu
     NYI_RISCV64("emitIns_J_R-----unimplemented/unused on RISCV64 yet----");
 }
 
+void emitter::emitIns_J_R_I(instruction ins, emitAttr attr, BasicBlock* dst, regNumber reg, int imm)
+{
+    assert(dst != nullptr);
+    assert(ins == INS_jal);
+    assert(dst->HasFlag(BBF_HAS_LABEL));
+    assert((EA_SIZE(attr) == EA_4BYTE || (EA_SIZE(attr) == EA_8BYTE)));
+
+    instrDescJmp* id = emitNewInstrJmp();
+    id->idIns(ins);
+    id->idCodeSize(4);
+    id->idReg1(reg);
+    id->idSmallCns(TrimSignedToImm21(imm));
+    id->idjShort = false;
+    id->idInsOpt(INS_OPTS_NONE);
+
+    id->idAddr()->iiaBBlabel = dst;
+    id->idjKeepLong          = emitComp->fgInDifferentRegions(emitComp->compCurBB, dst);
+
+    id->idjIG   = emitCurIG;
+    id->idjOffs = emitCurIGsize;
+
+    /* Append this jump to this IG's jump list */
+
+    id->idjNext      = emitCurIGjmpList;
+    emitCurIGjmpList = id;
+
+#if EMITTER_STATS
+    emitTotalIGjmps++;
+#endif
+
+    appendToCurIG(id);
+}
+
 void emitter::emitIns_J(instruction ins, BasicBlock* dst, int instrCount)
 {
     assert((INS_jal <= ins) && (ins <= INS_bgeu)); // Change with sanity check
@@ -1259,7 +1281,7 @@ void emitter::emitIns_J(instruction ins, BasicBlock* dst, int instrCount)
 
         id->idAddr()->iiaSetInstrCount(instrCount);
         id->idjKeepLong = false;
-        id->idjShort = true;
+        id->idjShort    = true;
         id->idSetIsBound();
     }
 
@@ -3182,9 +3204,11 @@ BYTE* emitter::emitOutputInstr_OptsNone(BYTE* dst, const instrDesc* id, instruct
             case INS_fsw:
                 dst += emitOutput_STypeInstr(dst, ins, id->idReg1(), id->idReg2(), emitGetInsSC(id));
                 break;
+            // J-Type instrunction
+            case INS_jal:
+                dst += emitOutput_JTypeInstr(dst, ins, id->idReg1(), emitGetInsSC(id));
+                break;
             default:
-                // J-Type instrunctions can only be generated via emitIns_J* functions
-                // thus they should not be evalutated in here
                 NO_WAY("illegal instruction within emitOutputInstr_OptsNone!");
                 break;
         }
