@@ -1259,6 +1259,7 @@ void emitter::emitIns_J(instruction ins, BasicBlock* dst, int instrCount)
 
         id->idAddr()->iiaSetInstrCount(instrCount);
         id->idjKeepLong = false;
+        id->idjShort = true;
         id->idSetIsBound();
     }
 
