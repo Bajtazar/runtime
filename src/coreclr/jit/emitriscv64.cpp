@@ -612,6 +612,7 @@ void emitter::emitIns_R_I(instruction ins, emitAttr attr, regNumber reg, ssize_t
     id->idIns(ins);
     id->idReg1(reg);
     id->idCodeSize(4);
+    id->idInsOpt(INS_OPTS_NONE);
 
     id->idAddr()->base = 0;
 
@@ -636,14 +637,10 @@ void emitter::emitIns_Mov(
     {
         if ((EA_4BYTE == attr) && (INS_mov == ins))
         {
-            assert(isGeneralRegisterOrR0(srcReg));
-            assert(isGeneralRegisterOrR0(dstReg));
             emitIns_R_R_I(INS_addiw, attr, dstReg, srcReg, 0);
         }
         else if (INS_fsgnj_s == ins || INS_fsgnj_d == ins)
         {
-            assert(isFloatReg(srcReg));
-            assert(isFloatReg(dstReg));
             emitIns_R_R_R(ins, attr, dstReg, srcReg, srcReg);
         }
         else if (genIsValidFloatReg(srcReg) || genIsValidFloatReg(dstReg))
@@ -652,8 +649,6 @@ void emitter::emitIns_Mov(
         }
         else
         {
-            assert(isGeneralRegisterOrR0(srcReg));
-            assert(isGeneralRegisterOrR0(dstReg));
             emitIns_R_R_I(INS_addi, attr, dstReg, srcReg, 0);
         }
     }
