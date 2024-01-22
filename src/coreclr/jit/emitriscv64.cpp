@@ -533,8 +533,6 @@ void emitter::emitIns_I_SanityCheck(instruction ins, ssize_t immediate)
             assert((fmField & 0x7) == 0); // Fm field can only be 0b1000 and 0b0000
         }
         break;
-        case INS_j:
-            break;
         default:
             NO_WAY("illegal ins within emitIns_I!");
             break;
@@ -558,15 +556,13 @@ void emitter::emitIns_I(instruction ins, emitAttr attr, ssize_t imm)
     {
         case INS_fence: // rd and rs1 are unused
             id = emitNewInstrCns(attr, TrimSignedToImm12(imm));
+
             id->idReg1(REG_ZERO);
             id->idReg2(REG_ZERO);
             break;
-        case INS_j:
-            id = emitNewInstrCns(attr, TrimSignedToImm21(imm));
-            id->idReg1(REG_ZERO);
-            break;
         default:
-            unreached();
+            NO_WAY("illegal ins within emitIns_I!");
+            break;
     }
 
     id->idIns(ins);
@@ -1227,12 +1223,37 @@ void emitter::emitIns_J_R(instruction ins, emitAttr attr, BasicBlock* dst, regNu
 
 void emitter::emitIns_J(instruction ins, BasicBlock* dst, int instrCount)
 {
-    assert(dst != nullptr);
+    if (dst != nullptr) {
+        assert(dst->HasFlag(BBF_HAS_LABEL));
+    } else {
+        assert(instrCount != 0);
+
+        switch (ins) {
+            case INS_j:
+                {
+                    instrDesc* id = emitNewInstrCns(EA_PTRSIZE, TrimSignedToImm21(instrCount));
+                    id->idIns(ins);
+                    id->idReg1(REG_ZERO);
+                    id->idInsOpt(INS_OPTS_NONE);
+                    id->idCodeSize(4);
+
+                    id->idAddr()->base = 0;
+
+                    appendToCurIG(id);
+                }
+                break;
+            default:
+                NO_WAY("Illegal instruction within emitIns_J!");
+                break;
+        }
+        return;
+    }
+
     //
     // INS_OPTS_J: placeholders.  1-ins: if the dst outof-range will be replaced by INS_OPTS_JALR.
     // jal/j/jalr/bnez/beqz/beq/bne/blt/bge/bltu/bgeu dst
 
-    assert(dst->HasFlag(BBF_HAS_LABEL));
+
 
     instrDescJmp* id = emitNewInstrJmp();
     assert((INS_jal <= ins) && (ins <= INS_bgeu));
