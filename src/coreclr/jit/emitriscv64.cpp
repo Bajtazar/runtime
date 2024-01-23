@@ -963,6 +963,51 @@ void emitter::emitIns_R_I_I(
     appendToCurIG(id);
 }
 
+#ifdef DEBUG
+void emitter::emitIns_R_R_R_SanityCheck(instruction ins, regNumber rd, regNumber reg1, regNumber reg2) {
+    switch (ins) {
+        case INS_add:
+        case INS_sub:
+        case INS_sll:
+        case INS_slt:
+        case INS_sltu:
+        case INS_xor:
+        case INS_srl:
+        case INS_sra:
+        case INS_or:
+        case INS_and:
+        case INS_addw:
+        case INS_subw:
+        case INS_sllw:
+        case INS_srlw:
+        case INS_sraw:
+        case INS_mul:
+        case INS_mulh:
+        case INS_mulhsu:
+        case INS_mulhu:
+        case INS_rem:
+        case INS_remu:
+        case INS_mulw:
+        case INS_remw:
+        case INS_remuw:
+            assert(isGeneralRegisterOrR0(rd));
+            assert(isGeneralRegisterOrR0(rs1));
+            assert(isGeneralRegisterOrR0(rs2));
+            break;
+        case INS_div:
+        case INS_divu:
+        case INS_divw:
+            assert(isGeneralRegisterOrR0(rd));
+            assert(isGeneralRegisterOrR0(rs1));
+            assert(isGeneralRegister(rs2));
+            break;
+        default:
+            NO_WAY("illegal ins within emitIns_R_R_R!");
+            break;
+    }
+}
+#endif // DEBUG
+
 /*****************************************************************************
  *
  *  Add an instruction referencing three registers.
