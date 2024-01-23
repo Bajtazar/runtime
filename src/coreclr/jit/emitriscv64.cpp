@@ -856,13 +856,13 @@ void emitter::emitIns_R_R_I_SanityCheck(instruction ins, regNumber reg1, regNumb
         case INS_lw:
         case INS_lwu:
         case INS_ld:
-            assert(isGeneralRegisterOrR0(rd));
-            assert(isGeneralRegister(rs1));
+            assert(isGeneralRegisterOrR0(reg1));
+            assert(isGeneralRegister(reg2));
             break;
         case INS_flw:
         case INS_fld:
-            assert(isFloatReg(rd));
-            assert(isGeneralRegister(rs1));
+            assert(isFloatReg(reg1));
+            assert(isGeneralRegister(reg2));
             break;
         case INS_slli:
         case INS_srli:
@@ -879,8 +879,8 @@ void emitter::emitIns_R_R_I_SanityCheck(instruction ins, regNumber reg1, regNumb
         case INS_csrrw:
         case INS_csrrs:
         case INS_csrrc:
-            assert(isGeneralRegisterOrR0(rd));
-            assert(isGeneralRegisterOrR0(rs1));
+            assert(isGeneralRegisterOrR0(reg1));
+            assert(isGeneralRegisterOrR0(reg2));
             break;
         case INS_fence:
             //
@@ -888,8 +888,8 @@ void emitter::emitIns_R_R_I_SanityCheck(instruction ins, regNumber reg1, regNumb
         case INS_slliw:
         case INS_srliw:
         case INS_sraiw:
-            assert(isGeneralRegisterOrR0(rd));
-            assert(isGeneralRegisterOrR0(rs1));
+            assert(isGeneralRegisterOrR0(reg1));
+            assert(isGeneralRegisterOrR0(reg2));
             assert((immediate >= 0) && (immediate <= 31));
             break;
         default:
