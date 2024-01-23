@@ -924,8 +924,10 @@ void emitter::emitIns_R_R_I(
 }
 
 #ifdef DEBUG
-void emitter::emitIns_R_I_I_SanityCheck(instruction ins, regNumber rd, ssize_t imm1, ssize_t imm2) {
-    switch (ins) {
+void emitter::emitIns_R_I_I_SanityCheck(instruction ins, regNumber rd, ssize_t imm1, ssize_t imm2)
+{
+    switch (ins)
+    {
         case INS_csrrwi:
         case INS_csrrsi:
         case INS_csrrci:
@@ -964,8 +966,10 @@ void emitter::emitIns_R_I_I(
 }
 
 #ifdef DEBUG
-void emitter::emitIns_R_R_R_SanityCheck(instruction ins, regNumber rd, regNumber reg1, regNumber reg2) {
-    switch (ins) {
+void emitter::emitIns_R_R_R_SanityCheck(instruction ins, regNumber rd, regNumber reg1, regNumber reg2)
+{
+    switch (ins)
+    {
         case INS_add:
         case INS_sub:
         case INS_sll:

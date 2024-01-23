@@ -1030,6 +1030,8 @@ protected:
                 regNumber      _idReg3 : REGNUM_BITS;
                 regNumber      _idReg4 : REGNUM_BITS;
                 unsigned char  _roundModifier : 3;
+                bool           _atomicAcquire : 1;
+                bool           _atomicRelease : 1;
             };
 
             struct
@@ -1182,6 +1184,26 @@ protected:
         {
             assert(roundModifier < 8);
             idAddr()->_roundModifier = roundModifier;
+        }
+
+        bool idAtomicAcquire() const
+        {
+            return idAddr()->_atomicAcquire;
+        }
+
+        void idAtomicAcquire(bool atomicAcquire)
+        {
+            idAddr()->_atomicAcquire = atomicAcquire;
+        }
+
+        bool idAtomicRelease() const
+        {
+            return idAddr()->_atomicRelease;
+        }
+
+        void idAtomicRelease(bool atomicRelease)
+        {
+            idAddr()->_atomicRelease = atomicRelease;
         }
 #endif
 
