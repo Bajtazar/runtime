@@ -875,7 +875,6 @@ void emitter::emitIns_R_R_I_SanityCheck(instruction ins, regNumber reg1, regNumb
         case INS_sltiu:
         case INS_xori:
         case INS_ori:
-        case INS_andi:
         case INS_addiw:
         case INS_csrrw:
         case INS_csrrs:
@@ -3397,6 +3396,19 @@ BYTE* emitter::emitOutputInstr_OptsNone(BYTE* dst, const instrDesc* id, instruct
             case INS_flw:
             case INS_fld:
             case INS_fence:
+            case INS_slli:
+            case INS_srai:
+            case INS_srli:
+            case INS_slti:
+            case INS_sltiu:
+            case INS_xori:
+            case INS_ori:
+            case INS_addiw:
+            case INS_csrrw:
+            case INS_csrrs:
+            case INS_slliw:
+            case INS_srliw:
+            case INS_sraiw:
                 dst += emitOutput_ITypeInstr(dst, ins, id->idReg1(), id->idReg2(), emitGetInsSC(id));
                 break;
             // R-Type instrucions
