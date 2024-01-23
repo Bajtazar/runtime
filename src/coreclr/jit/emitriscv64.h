@@ -69,6 +69,7 @@ void emitIns_S_R_R_GetRs1AndImm(int varx, int offs, regNumber tmpReg, regNumber*
 int emitIns_R_S_GetRs1AndImm(int varx, int offs, regNumber* rs1, ssize_t* imm);
 instrDesc* emitIns_R_S_GenLeaInstr(regNumber rd, regNumber rs1, emitAttr attr, ssize_t imm);
 instrDesc* emitIns_R_S_GenIns(instruction ins, regNumber rd, regNumber rs1, emitAttr attr, ssize_t imm);
+void emitIns_R_R_SetFloatInstrAdditionalData(instrDesc* id, instructions ins);
 
 bool emitInsIsLoad(instruction ins);
 bool emitInsIsStore(instruction ins);

@@ -1029,6 +1029,7 @@ protected:
                 unsigned char  base : 2;
                 regNumber      _idReg3 : REGNUM_BITS;
                 regNumber      _idReg4 : REGNUM_BITS;
+                unsigned char  _roundModifier : 3;
             };
 
             struct
@@ -1169,6 +1170,17 @@ protected:
             // e.g. the `emitter::emitLoadImmediate` for emitting the immediates.
             assert(sz <= 32);
             _idCodeSize = sz;
+        }
+
+        unsigned char idRoundModifier() const
+        {
+            return idAddr()->_roundModifier;
+        }
+
+        void idRoundModifier(unsigned char roundModifier)
+        {
+            assert(roundModifier < 8);
+            idAddr()->_roundModifier = roundModifier;
         }
 #endif
 

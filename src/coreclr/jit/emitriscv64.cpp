@@ -764,6 +764,8 @@ void emitter::emitIns_R_R_SanityCheck(instruction ins, regNumber reg1, regNumber
 void emitter::emitIns_R_R(
     instruction ins, emitAttr attr, regNumber reg1, regNumber reg2, insOpts opt /* = INS_OPTS_NONE */)
 {
+    static constexpr unsigned char kDynamicRoundingMode = 0x07;
+
 #ifdef DEBUG
     emitIns_R_R_SanityCheck(ins, reg1, reg2);
 #endif // DEBUG
@@ -777,7 +779,58 @@ void emitter::emitIns_R_R(
 
     id->idAddr()->base = 0;
 
+    emitIns_R_R_SetFloatInstrAdditionalData(id, ins);
+
     appendToCurIG(id);
+}
+
+void emitter::emitIns_R_R_SetFloatInstrAdditionalData(instrDesc* id, instructions ins)
+{
+    // saves constant required by the instruction rather than a real register
+    switch (ins)
+    {
+        case INS_fmv_x_d:
+        case INS_fmv_x_w:
+        case INS_fclass_s:
+        case INS_fclass_d:
+        case INS_fmv_w_x:
+        case INS_fmv_d_x:
+            id->idReg2(0);
+            id->idRoundingMode(0);
+            break;
+        case INS_fcvt_w_s:
+        case INS_fcvt_w_d:
+        case INS_fcvt_s_w:
+        case INS_fcvt_d_w:
+        case INS_fcvt_d_s:
+            id->idReg2(0);
+            id->idRoundingMode(kDynamicRoundingMode);
+            break;
+        case INS_fcvt_wu_s:
+        case INS_fcvt_wu_d:
+        case INS_fcvt_s_wu:
+        case INS_fcvt_d_wu:
+        case INS_fcvt_s_d:
+            id->idReg2(1);
+            id->idRoundingMode(kDynamicRoundingMode);
+            break;
+        case INS_fcvt_l_s:
+        case INS_fcvt_l_d:
+        case INS_fcvt_s_l:
+        case INS_fcvt_d_l:
+            id->idReg2(2);
+            id->idRoundingMode(kDynamicRoundingMode);
+            break;
+        case INS_fcvt_lu_s:
+        case INS_fcvt_lu_d:
+        case INS_fcvt_s_lu:
+        case INS_fcvt_d_lu:
+            id->idReg2(3);
+            id->idRoundingMode(kDynamicRoundingMode);
+            break;
+        default:
+            break;
+    }
 }
 
 /*****************************************************************************
