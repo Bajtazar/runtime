@@ -128,6 +128,7 @@ static code_t insEncodeJTypeInstr(unsigned opcode, unsigned rd, unsigned imm21);
 #ifdef DEBUG
 static void emitOutput_RTypeInstr_SanityCheck(instruction ins, regNumber rd, regNumber rs1, regNumber rs2);
 static void emitOutput_RTypeInstr_RoundMode_SanityCheck(instruction ins, regNumber rd, regNumber rs1, regNumber rs2);
+static void emitOutput_RTypeInstr_Atomic_SanityCheck(instruction ins, regNumber rd, regNumber rd1, regNumber rd2);
 static void emitOutput_ITypeInstr_SanityCheck(
     instruction ins, regNumber rd, regNumber rs1, unsigned immediate, unsigned opcode);
 static void emitOutput_STypeInstr_SanityCheck(instruction ins, regNumber rs1, regNumber rs2);

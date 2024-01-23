@@ -2730,6 +2730,49 @@ static constexpr unsigned kInstructionFunct7Mask = 0xfe000000;
     }
 }
 
+/*static*/ void emitter::emitOutput_RTypeInstr_Atomic_SanityCheck(instruction ins,
+                                                                  regNumber   rd,
+                                                                  regNumber   rd1,
+                                                                  regNumber   rd2)
+{
+    switch (ins)
+    {
+        case INS_lr_w:
+        case INS_lr_d:
+            assert(isGeneralRegisterOrR0(rd));
+            assert(isGeneralRegister(rs1));
+            assert(rs2 == REG_ZERO);
+            break;
+        case INS_sc_w:
+        case INS_amoswap_w:
+        case INS_amoadd_w:
+        case INS_amoxor_w:
+        case INS_amoand_w:
+        case INS_amoor_w:
+        case INS_amomin_w:
+        case INS_amomax_w:
+        case INS_amominu_w:
+        case INS_amomaxu_w:
+        case INS_sc_d:
+        case INS_amoswap_d:
+        case INS_amoadd_d:
+        case INS_amoxor_d:
+        case INS_amoand_d:
+        case INS_amoor_d:
+        case INS_amomin_d:
+        case INS_amomax_d:
+        case INS_amominu_d:
+        case INS_amomaxu_d:
+            assert(isGeneralRegisterOrR0(rd));
+            assert(isGeneralRegister(rs1));
+            assert(isGeneralRegisterOrR0(rs2));
+            break;
+        default:
+            NO_WAY("Illegal ins within emitOutput_RTypeInstr_Atomic!");
+            break;
+    }
+}
+
 /*static*/ void emitter::emitOutput_ITypeInstr_SanityCheck(
     instruction ins, regNumber rd, regNumber rs1, unsigned immediate, unsigned opcode)
 {
@@ -2948,7 +2991,9 @@ unsigned emitOutput_RTypeInstr_Atomic(
     BYTE* dst, instruction ins, regNumber rd, regNumber rs1, regNumber rs2, bool acquire, bool release)
 {
     unsigned insCode = emitInsCode(ins);
-
+#ifdef DEBUG
+    emitOutput_RTypeInstr_Atomic_SanityCheck(ins, rd, rs1, rs2);
+#endif // DEBUG
     unsigned opcode = insCode & kInstructionOpcodeMask;
     unsigned funct3 = (insCode & kInstructionFunct3Mask) >> 12;
     unsigned funct7 = ((insCode)&kInstructionFunct5Mask) >> 25;
