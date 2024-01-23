@@ -1011,15 +1011,15 @@ void emitter::emitIns_R_R_R_SanityCheck(instruction ins, regNumber rd, regNumber
         case INS_remw:
         case INS_remuw:
             assert(isGeneralRegisterOrR0(rd));
-            assert(isGeneralRegisterOrR0(rs1));
-            assert(isGeneralRegisterOrR0(rs2));
+            assert(isGeneralRegisterOrR0(reg1));
+            assert(isGeneralRegisterOrR0(reg2));
             break;
         case INS_div:
         case INS_divu:
         case INS_divw:
             assert(isGeneralRegisterOrR0(rd));
-            assert(isGeneralRegisterOrR0(rs1));
-            assert(isGeneralRegister(rs2));
+            assert(isGeneralRegisterOrR0(reg1));
+            assert(isGeneralRegister(reg2));
             break;
         default:
             NO_WAY("illegal ins within emitIns_R_R_R!");
@@ -2732,8 +2732,8 @@ static constexpr unsigned kInstructionFunct7Mask = 0xfe000000;
 
 /*static*/ void emitter::emitOutput_RTypeInstr_Atomic_SanityCheck(instruction ins,
                                                                   regNumber   rd,
-                                                                  regNumber   rd1,
-                                                                  regNumber   rd2)
+                                                                  regNumber   rs1,
+                                                                  regNumber   rs2)
 {
     switch (ins)
     {
@@ -2987,8 +2987,8 @@ unsigned emitter::emitOutput_RTypeInstr_RoundMode(
  *
  */
 
-unsigned emitOutput_RTypeInstr_Atomic(
-    BYTE* dst, instruction ins, regNumber rd, regNumber rs1, regNumber rs2, bool acquire, bool release)
+unsigned emitter::emitOutput_RTypeInstr_Atomic(
+    BYTE* dst, instruction ins, regNumber rd, regNumber rs1, regNumber rs2, bool acquire, bool release) const
 {
     unsigned insCode = emitInsCode(ins);
 #ifdef DEBUG
