@@ -57,6 +57,7 @@ instrDesc* emitNewInstrCallInd(int              argCnt,
 
 private:
 #ifdef DEBUG
+void emitIns_SanityCheck(instruction ins);
 void emitIns_S_R_R_SanityCheck(instruction ins, regNumber reg1, regNumber reg2);
 void emitIns_R_S_SanityCheck(instruction ins, emitAttr attr, regNumber rd, regNumber rs1);
 void emitIns_I_SanityCheck(instruction ins, ssize_t immediate);

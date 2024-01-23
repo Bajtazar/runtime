@@ -284,6 +284,23 @@ inline emitter::code_t emitter::emitInsCode(instruction ins /*, insFormat fmt*/)
     return code;
 }
 
+#ifdef DEBUG
+void emitter::emitIns_SanityCheck(instruction ins)
+{
+    switch (ins)
+    {
+        case INS_fence_tso:
+        case INS_pause:
+        case INS_ecall:
+        case INS_ebreak:
+            break;
+        default:
+            NO_WAY("illegal ins within emitIns!");
+            break;
+    }
+}
+#endif // DEBUG
+
 /****************************************************************************
  *
  *  Add an instruction with no operands.
@@ -291,11 +308,16 @@ inline emitter::code_t emitter::emitInsCode(instruction ins /*, insFormat fmt*/)
 
 void emitter::emitIns(instruction ins)
 {
+#ifdef DEBUG
+    emitIns_SanityCheck(ins);
+#endif // DEBUG
+
     instrDesc* id = emitNewInstr(EA_8BYTE);
 
     id->idIns(ins);
-    id->idAddr()->iiaSetInstrEncode(emitInsCode(ins));
     id->idCodeSize(4);
+
+    id->idAddr()->base = 0;
 
     appendToCurIG(id);
 }
