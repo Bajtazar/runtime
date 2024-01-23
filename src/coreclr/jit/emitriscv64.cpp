@@ -3235,6 +3235,13 @@ BYTE* emitter::emitOutputInstr_OptsNone(BYTE* dst, const instrDesc* id, instruct
             case INS_jal:
                 dst += emitOutput_JTypeInstr(dst, ins, id->idReg1(), emitGetInsSC(id));
                 break;
+            // Non-parametrized instructions - can be translated directly
+            case INS_fence_tso:
+            case INS_pause:
+            case INS_ecall:
+            case INS_ebreak:
+                dst += emitOutput_Instr(dst, emitInsCode(ins));
+                break;
             default:
                 NO_WAY("illegal instruction within emitOutputInstr_OptsNone!");
                 break;
