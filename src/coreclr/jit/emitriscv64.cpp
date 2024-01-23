@@ -764,8 +764,6 @@ void emitter::emitIns_R_R_SanityCheck(instruction ins, regNumber reg1, regNumber
 void emitter::emitIns_R_R(
     instruction ins, emitAttr attr, regNumber reg1, regNumber reg2, insOpts opt /* = INS_OPTS_NONE */)
 {
-    static constexpr unsigned char kDynamicRoundingMode = 0x07;
-
 #ifdef DEBUG
     emitIns_R_R_SanityCheck(ins, reg1, reg2);
 #endif // DEBUG
@@ -786,6 +784,7 @@ void emitter::emitIns_R_R(
 
 void emitter::emitIns_R_R_SetFloatInstrAdditionalData(instrDesc* id, instructions ins)
 {
+    static constexpr unsigned char kDynamicRoundingMode = 0x07;
     // saves constant required by the instruction rather than a real register
     switch (ins)
     {
@@ -795,15 +794,14 @@ void emitter::emitIns_R_R_SetFloatInstrAdditionalData(instrDesc* id, instruction
         case INS_fclass_d:
         case INS_fmv_w_x:
         case INS_fmv_d_x:
-            id->idReg2(0);
-            id->idRoundingMode(0);
+            id->idReg3(0);
             break;
         case INS_fcvt_w_s:
         case INS_fcvt_w_d:
         case INS_fcvt_s_w:
         case INS_fcvt_d_w:
         case INS_fcvt_d_s:
-            id->idReg2(0);
+            id->idReg3(0);
             id->idRoundingMode(kDynamicRoundingMode);
             break;
         case INS_fcvt_wu_s:
@@ -811,24 +809,25 @@ void emitter::emitIns_R_R_SetFloatInstrAdditionalData(instrDesc* id, instruction
         case INS_fcvt_s_wu:
         case INS_fcvt_d_wu:
         case INS_fcvt_s_d:
-            id->idReg2(1);
+            id->idReg3(1);
             id->idRoundingMode(kDynamicRoundingMode);
             break;
         case INS_fcvt_l_s:
         case INS_fcvt_l_d:
         case INS_fcvt_s_l:
         case INS_fcvt_d_l:
-            id->idReg2(2);
+            id->idReg3(2);
             id->idRoundingMode(kDynamicRoundingMode);
             break;
         case INS_fcvt_lu_s:
         case INS_fcvt_lu_d:
         case INS_fcvt_s_lu:
         case INS_fcvt_d_lu:
-            id->idReg2(3);
+            id->idReg3(3);
             id->idRoundingMode(kDynamicRoundingMode);
             break;
         default:
+            id->idSmallCns(0); // INS_mov is an INS_addi
             break;
     }
 }
@@ -2521,10 +2520,6 @@ static constexpr unsigned kInstructionFunct7Mask = 0xfe000000;
             assert(isGeneralRegisterOrR0(rs1));
             assert(isGeneralRegisterOrR0(rs2));
             break;
-        case INS_fadd_s:
-        case INS_fsub_s:
-        case INS_fmul_s:
-        case INS_fdiv_s:
         case INS_fsgnj_s:
         case INS_fsgnjn_s:
         case INS_fsgnjx_s:
@@ -2533,10 +2528,6 @@ static constexpr unsigned kInstructionFunct7Mask = 0xfe000000;
         case INS_feq_s:
         case INS_flt_s:
         case INS_fle_s:
-        case INS_fadd_d:
-        case INS_fsub_d:
-        case INS_fmul_d:
-        case INS_fdiv_d:
         case INS_fsgnj_d:
         case INS_fsgnjn_d:
         case INS_fsgnjx_d:
@@ -2551,6 +2542,91 @@ static constexpr unsigned kInstructionFunct7Mask = 0xfe000000;
             break;
         default:
             NO_WAY("Illegal ins within emitOutput_RTypeInstr!");
+            break;
+    }
+}
+
+/*static*/ void emitter::emitOutput_RTypeInstr_RoundMode_SanityCheck(instruction ins,
+                                                                     regNumber   rd,
+                                                                     regNumber   rs1,
+                                                                     regNumber   rs2)
+{
+    switch (ins)
+    {
+        case INS_fadd_s:
+        case INS_fsub_s:
+        case INS_fmul_s:
+        case INS_fdiv_s:
+        case INS_fadd_d:
+        case INS_fsub_d:
+        case INS_fmul_d:
+        case INS_fdiv_d:
+            assert(isFloatReg(rd));
+            assert(isFloatReg(rs1));
+            assert(isFloatReg(rs2));
+            break;
+        case INS_fsqrt_s:
+        case INS_fsqrt_d:
+        case INS_fcvt_d_s:
+            assert(isFloatReg(rd));
+            assert(isFloatReg(rs1));
+            assert(rs2 == 0);
+            break;
+        case INS_fcvt_w_s:
+        case INS_fcvt_w_d:
+            assert(isGeneralRegisterOrR0(rd));
+            assert(isFloatReg(rs1));
+            assert(rs2 == 0);
+            break;
+        case INS_fcvt_s_w:
+        case INS_fcvt_d_w:
+            assert(isFloatReg(rd));
+            assert(isGeneralRegisterOrR0(rs1));
+            assert(rs2 == 0);
+            break;
+        case INS_fcvt_wu_s:
+        case INS_fcvt_wu_d:
+            assert(isGeneralRegisterOrR0(rd));
+            assert(isFloatReg(rs1));
+            assert(rs2 == 1);
+            break;
+        case INS_fcvt_s_d:
+            assert(isFloatReg(reg1));
+            assert(isFloatReg(reg2));
+            assert(rs2 == 1);
+            break;
+        case INS_fcvt_s_wu:
+        case INS_fcvt_d_wu:
+            assert(isFloatReg(rd));
+            assert(isGeneralRegisterOrR0(rs1));
+            assert(rs2 == 1);
+            break;
+        case INS_fcvt_l_s:
+        case INS_fcvt_l_d:
+            assert(isGeneralRegisterOrR0(reg1));
+            assert(isFloatReg(reg2));
+            assert(rs2 == 2);
+            break;
+        case INS_fcvt_s_l:
+        case INS_fcvt_d_l:
+            assert(isFloatReg(reg1));
+            assert(isGeneralRegisterOrR0(reg2));
+            assert(rs2 == 2);
+            break;
+        case INS_fcvt_lu_s:
+        case INS_fcvt_lu_d:
+            assert(isGeneralRegisterOrR0(reg1));
+            assert(isFloatReg(reg2));
+            assert(rs2 == 3);
+            break;
+        case INS_fcvt_s_lu:
+        case INS_fcvt_d_lu:
+            assert(isFloatReg(reg1));
+            assert(isGeneralRegisterOrR0(reg2));
+            assert(rs2 == 3);
+            break;
+        default:
+            NO_WAY("Illegal ins within emitOutput_RTypeInstr_RoundMode!");
             break;
     }
 }
@@ -2738,6 +2814,27 @@ unsigned emitter::emitOutput_RTypeInstr(BYTE* dst, instruction ins, regNumber rd
     unsigned funct3 = (insCode & kInstructionFunct3Mask) >> 12;
     unsigned funct7 = (insCode & kInstructionFunct7Mask) >> 25;
     return emitOutput_Instr(dst, insEncodeRTypeInstr(opcode, castFloatOrIntegralReg(rd), funct3,
+                                                     castFloatOrIntegralReg(rs1), castFloatOrIntegralReg(rs2), funct7));
+}
+
+/*****************************************************************************
+ *
+ *  Emit a 32-bit RISCV64 R-Type instruction which funct3 is replaced with
+ *  round mode to the given buffer. Returns a length of an encoded instruction
+ *  opcode
+ *
+ */
+
+unsigned emitOutput_RTypeInstr_RoundMode(
+    BYTE* dst, instruction ins, regNumber rd, regNumber rs1, regNumber rs2, unsigned char roundMode) const
+{
+    unsigned insCode = emitInsCode(ins);
+#ifdef DEBUG
+    emitOutput_RTypeInstr_RoundMode_SanityCheck(ins, rd, rs1, rs2);
+#endif // DEBUG
+    unsigned opcode = insCode & kInstructionOpcodeMask;
+    unsigned funct7 = (insCode & kInstructionFunct7Mask) >> 25;
+    return emitOutput_Instr(dst, insEncodeRTypeInstr(opcode, castFloatOrIntegralReg(rd), roundMode,
                                                      castFloatOrIntegralReg(rs1), castFloatOrIntegralReg(rs2), funct7));
 }
 
@@ -3261,6 +3358,7 @@ BYTE* emitter::emitOutputInstr_OptsNone(BYTE* dst, const instrDesc* id, instruct
                 dst += emitOutput_UTypeInstr(dst, ins, id->idReg1(), emitGetInsSC(id));
                 break;
             // I-Type instructions
+            case INS_mov:
             case INS_addi:
             case INS_lb:
             case INS_lbu:
@@ -3276,6 +3374,12 @@ BYTE* emitter::emitOutputInstr_OptsNone(BYTE* dst, const instrDesc* id, instruct
                 break;
             // R-Type instrucions
             case INS_add:
+            case INS_fmv_x_d:
+            case INS_fmv_x_w:
+            case INS_fclass_s:
+            case INS_fclass_d:
+            case INS_fmv_w_x:
+            case INS_fmv_d_x:
                 dst += emitOutput_RTypeInstr(dst, ins, id->idReg1(), id->idReg2(), id->idReg3());
                 break;
             // S-Type instructions
