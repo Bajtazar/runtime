@@ -3590,6 +3590,32 @@ BYTE* emitter::emitOutputInstr_OptsNone(BYTE* dst, const instrDesc* id, instruct
                 dst += emitOutput_RTypeInstr_RoundMode(dst, ins, id->idReg1(), id->idReg2(), id->idReg3(),
                                                        id->idRoundModifier());
                 break;
+            // R-Type atomic instructions
+            case INS_lr_w:
+            case INS_lr_d:
+            case INS_sc_w:
+            case INS_amoswap_w:
+            case INS_amoadd_w:
+            case INS_amoxor_w:
+            case INS_amoand_w:
+            case INS_amoor_w:
+            case INS_amomin_w:
+            case INS_amomax_w:
+            case INS_amominu_w:
+            case INS_amomaxu_w:
+            case INS_sc_d:
+            case INS_amoswap_d:
+            case INS_amoadd_d:
+            case INS_amoxor_d:
+            case INS_amoand_d:
+            case INS_amoor_d:
+            case INS_amomin_d:
+            case INS_amomax_d:
+            case INS_amominu_d:
+            case INS_amomaxu_d:
+                dst += emitOutput_RTypeInstr_Atomic(dst, ins, id->idReg1(), id->idReg2(), id->idReg3(),
+                                                    id->idAtomicAcquire(), id->idAtomicRelease());
+                break;
             // S-Type instructions
             case INS_sd:
             case INS_sw:
