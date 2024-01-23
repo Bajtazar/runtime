@@ -2578,6 +2578,7 @@ static inline void assertCodeLength(unsigned code, uint8_t size)
 
 static constexpr unsigned kInstructionOpcodeMask = 0x7f;
 static constexpr unsigned kInstructionFunct3Mask = 0x7000;
+static constexpr unsigned kInstructionFunct5Mask = 0xf8000000;
 static constexpr unsigned kInstructionFunct7Mask = 0xfe000000;
 
 #ifdef DEBUG
@@ -2934,6 +2935,25 @@ unsigned emitter::emitOutput_RTypeInstr_RoundMode(
     unsigned funct7 = (insCode & kInstructionFunct7Mask) >> 25;
     return emitOutput_Instr(dst, insEncodeRTypeInstr(opcode, castFloatOrIntegralReg(rd), roundMode,
                                                      castFloatOrIntegralReg(rs1), castFloatOrIntegralReg(rs2), funct7));
+}
+
+/*****************************************************************************
+ *
+ *  Emit a 32-bit RISCV64 R-Type atomic instruction to the given buffer.
+ *  Returns a length of an encoded instruction opcode
+ *
+ */
+
+unsigned emitOutput_RTypeInstr_Atomic(
+    BYTE* dst, instruction ins, regNumber rd, regNumber rs1, regNumber rs2, bool acquire, bool release)
+{
+    unsigned insCode = emitInsCode(ins);
+
+    unsigned opcode = insCode & kInstructionOpcodeMask;
+    unsigned funct3 = (insCode & kInstructionFunct3Mask) >> 12;
+    unsigned funct7 = ((insCode)&kInstructionFunct5Mask) >> 25;
+    funct7 |= (acquire ? 0x02 : 0x00) | (release ? 0x01 : 0x00);
+    return emitOutput_Instr(dst, insEncodeRTypeInstr(opcode, rd, funct3, rs1, rs2, funct7));
 }
 
 /*****************************************************************************

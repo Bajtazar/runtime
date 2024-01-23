@@ -141,6 +141,8 @@ static unsigned castFloatOrIntegralReg(regNumber reg);
 unsigned emitOutput_RTypeInstr(BYTE* dst, instruction ins, regNumber rd, regNumber rs1, regNumber rs2) const;
 unsigned emitOutput_RTypeInstr_RoundMode(
     BYTE* dst, instruction ins, regNumber rd, regNumber rs1, regNumber rs2, unsigned char roundMode) const;
+unsigned emitOutput_RTypeInstr_Atomic(
+    BYTE* dst, instruction ins, regNumber rd, regNumber rs1, regNumber rs2, bool acquire, bool release);
 unsigned emitOutput_ITypeInstr(BYTE* dst, instruction ins, regNumber rd, regNumber rs1, unsigned imm12) const;
 unsigned emitOutput_STypeInstr(BYTE* dst, instruction ins, regNumber rs1, regNumber rs2, unsigned imm12) const;
 unsigned emitOutput_UTypeInstr(BYTE* dst, instruction ins, regNumber rd, unsigned imm20) const;
