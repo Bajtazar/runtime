@@ -832,6 +832,84 @@ void emitter::emitIns_R_R_SetFloatInstrAdditionalData(instrDesc* id, instruction
     }
 }
 
+#ifdef DEBUG
+void emitter::emitIns_R_R_I_SanityCheck(instruction ins, regNumber reg1, regNumber reg2, ssize_t immediate)
+{
+    switch (ins)
+    {
+        case INS_sd:
+        case INS_sw:
+        case INS_sh:
+        case INS_sb:
+            assert(isGeneralRegister(reg1));
+            assert(isGeneralRegisterOrR0(reg2));
+            break;
+        case INS_fsd:
+        case INS_fsw:
+            assert(isGeneralRegister(reg1));
+            assert(isFloatReg(reg2));
+            break;
+        case INS_lb:
+        case INS_lbu:
+        case INS_lh:
+        case INS_lhu:
+        case INS_lw:
+        case INS_lwu:
+        case INS_ld:
+            assert(isGeneralRegisterOrR0(rd));
+            assert(isGeneralRegister(rs1));
+            break;
+        case INS_flw:
+        case INS_fld:
+            assert(isFloatReg(rd));
+            assert(isGeneralRegister(rs1));
+            break;
+        case INS_slli:
+        case INS_srli:
+        case INS_srai:
+            assert((immediate >= 0) && (immediate <= 63));
+            FALLTHROUGH;
+        case INS_addi:
+        case INS_mov:
+        case INS_slti:
+        case INS_sltiu:
+        case INS_xori:
+        case INS_ori:
+        case INS_andi:
+        case INS_addiw:
+        case INS_csrrw:
+        case INS_csrrs:
+        case INS_csrrc:
+            assert(isGeneralRegisterOrR0(rd));
+            assert(isGeneralRegisterOrR0(rs1));
+            break;
+        case INS_fence:
+            //
+            break;
+        case INS_slliw:
+        case INS_srliw:
+        case INS_sraiw:
+            assert(isGeneralRegisterOrR0(rd));
+            assert(isGeneralRegisterOrR0(rs1));
+            assert((immediate >= 0) && (immediate <= 31));
+            break;
+        case INS_beq:
+        case INS_bne:
+        case INS_blt:
+        case INS_bge:
+        case INS_bltu:
+        case INS_bgeu:
+            assert(isGeneralRegisterOrR0(rs1));
+            assert(isGeneralRegisterOrR0(rs2));
+            break;
+        default:
+            NO_WAY("illegal ins within emitIns_R_R_I!");
+            break;
+    }
+}
+
+#endif // DEBUG
+
 /*****************************************************************************
  *
  *  Add an instruction referencing two registers and a constant.

@@ -1164,6 +1164,7 @@ protected:
         {
             return _idCodeSize;
         }
+
         void idCodeSize(unsigned sz)
         {
             // RISCV64's instrDesc is not always meaning only one instruction.
