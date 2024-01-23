@@ -923,6 +923,23 @@ void emitter::emitIns_R_R_I(
     appendToCurIG(id);
 }
 
+#ifdef DEBUG
+void emitter::emitIns_R_I_I_SanityCheck(instruction ins, regNumber rd, ssize_t imm1, ssize_t imm2) {
+    switch (ins) {
+        case INS_csrrwi:
+        case INS_csrrsi:
+        case INS_csrrci:
+            assert(isGeneralRegisterOrR0(rd));
+            assert(isValidUimm5(imm1));
+            assert(isValidUimm12(imm2));
+            break;
+        default:
+            NO_WAY("illegal ins within emitIns_R_I_I!");
+            break;
+    }
+}
+#endif // DEBUG
+
 /*****************************************************************************
  *
  *  Add an instruction referencing register and two constants.
@@ -931,27 +948,17 @@ void emitter::emitIns_R_R_I(
 void emitter::emitIns_R_I_I(
     instruction ins, emitAttr attr, regNumber reg1, ssize_t imm1, ssize_t imm2, insOpts opt) /* = INS_OPTS_NONE */
 {
-    code_t code = emitInsCode(ins);
-
-    if (INS_csrrwi <= ins && ins <= INS_csrrci)
-    {
-        assert(isGeneralRegisterOrR0(reg1));
-        assert(isValidUimm5(imm1));
-        assert(isValidUimm12(imm2));
-        code |= reg1 << 7;
-        code |= imm1 << 15;
-        code |= imm2 << 20;
-    }
-    else
-    {
-        NYI_RISCV64("illegal ins within emitIns_R_I_I!");
-    }
-    instrDesc* id = emitNewInstr(attr);
+#ifdef DEBUG
+    emitIns_R_I_I_SanityCheck(ins, reg1, imm1, imm2);
+#endif // DEBUG
+    instrDesc* id = emitNewInstrCns(attr, imm2);
 
     id->idIns(ins);
     id->idReg1(reg1);
-    id->idAddr()->iiaSetInstrEncode(code);
+    id->idReg2(static_cast<regNumber>(imm1));
     id->idCodeSize(4);
+
+    id->idAddr()->base = 0;
 
     appendToCurIG(id);
 }
