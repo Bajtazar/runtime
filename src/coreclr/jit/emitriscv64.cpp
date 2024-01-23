@@ -704,6 +704,58 @@ void emitter::emitIns_Mov(emitAttr attr, regNumber dstReg, regNumber srcReg, boo
     }
 }
 
+#ifdef DEBUG
+void emitter::emitIns_R_R_SanityCheck(instruction ins, regNumber reg1, regNumber reg2)
+{
+    switch (ins)
+    {
+        case INS_mov:
+            assert(isGeneralRegisterOrR0(reg1));
+            assert(isGeneralRegisterOrR0(reg2));
+            break;
+        case INS_fmv_x_d:
+        case INS_fmv_x_w:
+        case INS_fclass_s:
+        case INS_fclass_d:
+        case INS_fcvt_w_s:
+        case INS_fcvt_wu_s:
+        case INS_fcvt_w_d:
+        case INS_fcvt_wu_d:
+        case INS_fcvt_l_s:
+        case INS_fcvt_lu_s:
+        case INS_fcvt_l_d:
+        case INS_fcvt_lu_d:
+            assert(isGeneralRegisterOrR0(reg1));
+            assert(isFloatReg(reg2));
+            break;
+        case INS_fmv_w_x:
+        case INS_fmv_d_x:
+            assert(isFloatReg(reg1));
+            assert(isGeneralRegisterOrR0(reg2));
+            break;
+        case INS_fcvt_s_w:
+        case INS_fcvt_s_wu:
+        case INS_fcvt_d_w:
+        case INS_fcvt_d_wu:
+        case INS_fcvt_s_l:
+        case INS_fcvt_s_lu:
+        case INS_fcvt_d_l:
+        case INS_fcvt_d_lu:
+            assert(isFloatReg(reg1));
+            assert(isGeneralRegisterOrR0(reg2));
+            break;
+        case INS_fcvt_s_d:
+        case INS_fcvt_d_s:
+            assert(isFloatReg(reg1));
+            assert(isFloatReg(reg2));
+            break;
+        default:
+            NO_WAY("illegal ins within emitIns_R_R!");
+            break;
+    }
+}
+#endif // DEBUG
+
 /*****************************************************************************
  *
  *  Add an instruction referencing two registers
@@ -712,67 +764,18 @@ void emitter::emitIns_Mov(emitAttr attr, regNumber dstReg, regNumber srcReg, boo
 void emitter::emitIns_R_R(
     instruction ins, emitAttr attr, regNumber reg1, regNumber reg2, insOpts opt /* = INS_OPTS_NONE */)
 {
-    code_t code = emitInsCode(ins);
-
-    if (INS_mov == ins)
-    {
-        assert(isGeneralRegisterOrR0(reg1));
-        assert(isGeneralRegisterOrR0(reg2));
-        code |= reg1 << 7;
-        code |= reg2 << 15;
-    }
-    else if (INS_fmv_x_d == ins || INS_fmv_x_w == ins || INS_fclass_s == ins || INS_fclass_d == ins)
-    {
-        assert(isGeneralRegisterOrR0(reg1));
-        assert(isFloatReg(reg2));
-        code |= reg1 << 7;
-        code |= (reg2 & 0x1f) << 15;
-    }
-    else if (INS_fcvt_w_s == ins || INS_fcvt_wu_s == ins || INS_fcvt_w_d == ins || INS_fcvt_wu_d == ins ||
-             INS_fcvt_l_s == ins || INS_fcvt_lu_s == ins || INS_fcvt_l_d == ins || INS_fcvt_lu_d == ins)
-    {
-        assert(isGeneralRegisterOrR0(reg1));
-        assert(isFloatReg(reg2));
-        code |= reg1 << 7;
-        code |= (reg2 & 0x1f) << 15;
-        code |= 0x1 << 12;
-    }
-    else if (INS_fmv_w_x == ins || INS_fmv_d_x == ins)
-    {
-        assert(isFloatReg(reg1));
-        assert(isGeneralRegisterOrR0(reg2));
-        code |= (reg1 & 0x1f) << 7;
-        code |= reg2 << 15;
-    }
-    else if (INS_fcvt_s_w == ins || INS_fcvt_s_wu == ins || INS_fcvt_d_w == ins || INS_fcvt_d_wu == ins ||
-             INS_fcvt_s_l == ins || INS_fcvt_s_lu == ins || INS_fcvt_d_l == ins || INS_fcvt_d_lu == ins)
-    {
-        assert(isFloatReg(reg1));
-        assert(isGeneralRegisterOrR0(reg2));
-        code |= (reg1 & 0x1f) << 7;
-        code |= reg2 << 15;
-        code |= 0x7 << 12;
-    }
-    else if (INS_fcvt_s_d == ins || INS_fcvt_d_s == ins)
-    {
-        assert(isFloatReg(reg1));
-        assert(isFloatReg(reg2));
-        code |= (reg1 & 0x1f) << 7;
-        code |= (reg2 & 0x1f) << 15;
-        code |= 0x7 << 12;
-    }
-    else
-    {
-        NYI_RISCV64("illegal ins within emitIns_R_R!");
-    }
+#ifdef DEBUG
+    emitIns_R_R_SanityCheck(ins, reg1, reg2);
+#endif // DEBUG
 
     instrDesc* id = emitNewInstr(attr);
 
     id->idIns(ins);
     id->idReg1(reg1);
     id->idReg2(reg2);
-    id->idAddr()->iiaSetInstrEncode(code);
     id->idCodeSize(4);
+
+    id->idAddr()->base = 0;
 
     appendToCurIG(id);
 }
