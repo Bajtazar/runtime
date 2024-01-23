@@ -782,7 +782,7 @@ void emitter::emitIns_R_R(
     appendToCurIG(id);
 }
 
-void emitter::emitIns_R_R_SetFloatInstrAdditionalData(instrDesc* id, instructions ins)
+void emitter::emitIns_R_R_SetFloatInstrAdditionalData(instrDesc* id, instruction ins)
 {
     static constexpr unsigned char kDynamicRoundingMode = 0x07;
     // saves constant required by the instruction rather than a real register
@@ -794,37 +794,37 @@ void emitter::emitIns_R_R_SetFloatInstrAdditionalData(instrDesc* id, instruction
         case INS_fclass_d:
         case INS_fmv_w_x:
         case INS_fmv_d_x:
-            id->idReg3(0);
+            id->idReg3(static_cast<regNumber>(0));
             break;
         case INS_fcvt_w_s:
         case INS_fcvt_w_d:
         case INS_fcvt_s_w:
         case INS_fcvt_d_w:
         case INS_fcvt_d_s:
-            id->idReg3(0);
-            id->idRoundingMode(kDynamicRoundingMode);
+            id->idReg3(static_cast<regNumber>(0));
+            id->idRoundModifier(kDynamicRoundingMode);
             break;
         case INS_fcvt_wu_s:
         case INS_fcvt_wu_d:
         case INS_fcvt_s_wu:
         case INS_fcvt_d_wu:
         case INS_fcvt_s_d:
-            id->idReg3(1);
-            id->idRoundingMode(kDynamicRoundingMode);
+            id->idReg3(static_cast<regNumber>(1));
+            id->idRoundModifier(kDynamicRoundingMode);
             break;
         case INS_fcvt_l_s:
         case INS_fcvt_l_d:
         case INS_fcvt_s_l:
         case INS_fcvt_d_l:
-            id->idReg3(2);
-            id->idRoundingMode(kDynamicRoundingMode);
+            id->idReg3(static_cast<regNumber>(2));
+            id->idRoundModifier(kDynamicRoundingMode);
             break;
         case INS_fcvt_lu_s:
         case INS_fcvt_lu_d:
         case INS_fcvt_s_lu:
         case INS_fcvt_d_lu:
-            id->idReg3(3);
-            id->idRoundingMode(kDynamicRoundingMode);
+            id->idReg3(static_cast<regNumber>(3));
+            id->idRoundModifier(kDynamicRoundingMode);
             break;
         default:
             id->idSmallCns(0); // INS_mov is an INS_addi
@@ -2591,8 +2591,8 @@ static constexpr unsigned kInstructionFunct7Mask = 0xfe000000;
             assert(rs2 == 1);
             break;
         case INS_fcvt_s_d:
-            assert(isFloatReg(reg1));
-            assert(isFloatReg(reg2));
+            assert(isFloatReg(rd));
+            assert(isFloatReg(rs1));
             assert(rs2 == 1);
             break;
         case INS_fcvt_s_wu:
@@ -2603,26 +2603,26 @@ static constexpr unsigned kInstructionFunct7Mask = 0xfe000000;
             break;
         case INS_fcvt_l_s:
         case INS_fcvt_l_d:
-            assert(isGeneralRegisterOrR0(reg1));
-            assert(isFloatReg(reg2));
+            assert(isGeneralRegisterOrR0(rd));
+            assert(isFloatReg(rs2));
             assert(rs2 == 2);
             break;
         case INS_fcvt_s_l:
         case INS_fcvt_d_l:
-            assert(isFloatReg(reg1));
-            assert(isGeneralRegisterOrR0(reg2));
+            assert(isFloatReg(rd));
+            assert(isGeneralRegisterOrR0(rs1));
             assert(rs2 == 2);
             break;
         case INS_fcvt_lu_s:
         case INS_fcvt_lu_d:
-            assert(isGeneralRegisterOrR0(reg1));
-            assert(isFloatReg(reg2));
+            assert(isGeneralRegisterOrR0(rd));
+            assert(isFloatReg(rs1));
             assert(rs2 == 3);
             break;
         case INS_fcvt_s_lu:
         case INS_fcvt_d_lu:
-            assert(isFloatReg(reg1));
-            assert(isGeneralRegisterOrR0(reg2));
+            assert(isFloatReg(rd));
+            assert(isGeneralRegisterOrR0(rs1));
             assert(rs2 == 3);
             break;
         default:
@@ -2825,7 +2825,7 @@ unsigned emitter::emitOutput_RTypeInstr(BYTE* dst, instruction ins, regNumber rd
  *
  */
 
-unsigned emitOutput_RTypeInstr_RoundMode(
+unsigned emitter::emitOutput_RTypeInstr_RoundMode(
     BYTE* dst, instruction ins, regNumber rd, regNumber rs1, regNumber rs2, unsigned char roundMode) const
 {
     unsigned insCode = emitInsCode(ins);
@@ -3412,7 +3412,7 @@ BYTE* emitter::emitOutputInstr_OptsNone(BYTE* dst, const instrDesc* id, instruct
             case INS_fcvt_s_lu:
             case INS_fcvt_d_lu:
                 dst += emitOutput_RTypeInstr_RoundMode(dst, ins, id->idReg1(), id->idReg2(), id->idReg3(),
-                                                       id->idRoundingMode());
+                                                       id->idRoundModifier());
                 break;
             // S-Type instructions
             case INS_sd:
