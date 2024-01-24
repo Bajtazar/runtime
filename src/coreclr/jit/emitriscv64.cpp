@@ -1167,7 +1167,8 @@ void emitter::emitIns_R_R_I_I(
 
 #ifdef DEBUG
 
-void emitter::emitIns_R_R_R_R_SanityCheck(instruction ins, regNumber rd, regNumber rs1, regNumber rs2, regNumber rs3) {
+void emitter::emitIns_R_R_R_R_SanityCheck(instruction ins, regNumber rd, regNumber rs1, regNumber rs2, regNumber rs3)
+{
     switch (ins)
     {
         case INS_fmadd_s:
@@ -2589,6 +2590,7 @@ static constexpr unsigned kInstructionOpcodeMask = 0x7f;
 static constexpr unsigned kInstructionFunct3Mask = 0x7000;
 static constexpr unsigned kInstructionFunct5Mask = 0xf8000000;
 static constexpr unsigned kInstructionFunct7Mask = 0xfe000000;
+static constexpr unsigned kInstructionFunct2Mask = 0x06000000;
 
 #ifdef DEBUG
 
@@ -2778,6 +2780,30 @@ static constexpr unsigned kInstructionFunct7Mask = 0xfe000000;
             break;
         default:
             NO_WAY("Illegal ins within emitOutput_RTypeInstr_Atomic!");
+            break;
+    }
+}
+
+/*static*/ void emitter::emitOutput_R4TypeInstr_SanityCheck(
+    instruction ins, regNumber rd, regNumber rs1, regNumber rs2, regNumber rs3)
+{
+    switch (ins)
+    {
+        case INS_fmadd_s:
+        case INS_fmsub_s:
+        case INS_fnmadd_s:
+        case INS_fnmsub_s:
+        case INS_fmadd_d:
+        case INS_fmsub_d:
+        case INS_fnmadd_d:
+        case INS_fnmsub_d:
+            assert(isFloatReg(rd));
+            assert(isFloatReg(rs1));
+            assert(isFloatReg(rs2));
+            assert(isFloatReg(rs3));
+            break;
+        default:
+            NO_WAY("illegal ins within emitIns_R_R_R_R!");
             break;
     }
 }
@@ -3005,8 +3031,28 @@ unsigned emitter::emitOutput_RTypeInstr_Atomic(
 #endif // DEBUG
     unsigned opcode = insCode & kInstructionOpcodeMask;
     unsigned funct3 = (insCode & kInstructionFunct3Mask) >> 12;
-    unsigned funct7 = ((insCode)&kInstructionFunct5Mask) >> 25;
+    unsigned funct7 = (insCode & kInstructionFunct5Mask) >> 25;
     funct7 |= (acquire ? 0x02 : 0x00) | (release ? 0x01 : 0x00);
+    return emitOutput_Instr(dst, insEncodeRTypeInstr(opcode, rd, funct3, rs1, rs2, funct7));
+}
+
+/*****************************************************************************
+ *
+ *  Emit a 32-bit RISCV64 R-Type 4 register instruction (R4-Type) to
+ *  the given buffer. Returns a length of an encoded instruction opcode
+ *
+ */
+
+unsigned emitter::emitOutput_R4TypeInstr(
+    BYTE* dst, instruction ins, regNumber rd, regNumber rs1, regNumber rs2, regNumber rs3) const
+{
+    unsigned insCode = emitInsCode(ins);
+#ifdef DEBUG
+    emitOutput_R4TypeInstr_SanityCheck(ins, rd, rs1, rs2, rs3);
+#endif // DEBUG
+    unsigned opcode = insCode & kInstructionOpcodeMask;
+    unsigned funct3 = (insCode & kInstructionFunct3Mask) >> 12;
+    unsigned funct7 = ((inCode & kInstructionFunct2Mask) >> 25) | (rs3 << 2);
     return emitOutput_Instr(dst, insEncodeRTypeInstr(opcode, rd, funct3, rs1, rs2, funct7));
 }
 

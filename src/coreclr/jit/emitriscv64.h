@@ -130,6 +130,8 @@ static code_t insEncodeJTypeInstr(unsigned opcode, unsigned rd, unsigned imm21);
 static void emitOutput_RTypeInstr_SanityCheck(instruction ins, regNumber rd, regNumber rs1, regNumber rs2);
 static void emitOutput_RTypeInstr_RoundMode_SanityCheck(instruction ins, regNumber rd, regNumber rs1, regNumber rs2);
 static void emitOutput_RTypeInstr_Atomic_SanityCheck(instruction ins, regNumber rd, regNumber rd1, regNumber rd2);
+static void emitOutput_R4TypeInstr_SanityCheck(
+    instruction ins, regNumber rd, regNumber rd1, regNumber rd2, regNumber rd3);
 static void emitOutput_ITypeInstr_SanityCheck(
     instruction ins, regNumber rd, regNumber rs1, unsigned immediate, unsigned opcode);
 static void emitOutput_STypeInstr_SanityCheck(instruction ins, regNumber rs1, regNumber rs2);
@@ -145,6 +147,8 @@ unsigned emitOutput_RTypeInstr_RoundMode(
     BYTE* dst, instruction ins, regNumber rd, regNumber rs1, regNumber rs2, unsigned char roundMode) const;
 unsigned emitOutput_RTypeInstr_Atomic(
     BYTE* dst, instruction ins, regNumber rd, regNumber rs1, regNumber rs2, bool acquire, bool release) const;
+unsigned emitOutput_R4TypeInstr(
+    BYTE* dst, instruction ins, regNumber rd, regNumber rs1, regNumber rs2, regNumber rs3) const;
 unsigned emitOutput_ITypeInstr(BYTE* dst, instruction ins, regNumber rd, regNumber rs1, unsigned imm12) const;
 unsigned emitOutput_STypeInstr(BYTE* dst, instruction ins, regNumber rs1, regNumber rs2, unsigned imm12) const;
 unsigned emitOutput_UTypeInstr(BYTE* dst, instruction ins, regNumber rd, unsigned imm20) const;
