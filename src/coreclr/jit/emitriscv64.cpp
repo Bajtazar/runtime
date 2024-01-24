@@ -789,9 +789,10 @@ void emitter::emitIns_R_R(
     appendToCurIG(id);
 }
 
+static constexpr unsigned char kDynamicRoundingMode = 0x07;
+
 void emitter::emitIns_R_R_SetFloatInstrAdditionalData(instrDesc* id, instruction ins)
 {
-    static constexpr unsigned char kDynamicRoundingMode = 0x07;
     // saves constant required by the instruction rather than a real register
     switch (ins)
     {
@@ -1010,6 +1011,7 @@ void emitter::emitIns_R_R_R_SanityCheck(instruction ins, regNumber rd, regNumber
         case INS_mulw:
         case INS_remw:
         case INS_remuw:
+        case INS_sc_w:
         case INS_amoswap_w:
         case INS_amoadd_w:
         case INS_amoxor_w:
@@ -1019,6 +1021,7 @@ void emitter::emitIns_R_R_R_SanityCheck(instruction ins, regNumber rd, regNumber
         case INS_amomax_w:
         case INS_amominu_w:
         case INS_amomaxu_w:
+        case INS_sc_d:
         case INS_amoswap_d:
         case INS_amoadd_d:
         case INS_amoxor_d:
@@ -1082,135 +1085,54 @@ void emitter::emitIns_R_R_R_SanityCheck(instruction ins, regNumber rd, regNumber
 void emitter::emitIns_R_R_R(
     instruction ins, emitAttr attr, regNumber reg1, regNumber reg2, regNumber reg3, insOpts opt) /* = INS_OPTS_NONE */
 {
-    code_t code = emitInsCode(ins);
-
-    if ((INS_add <= ins && ins <= INS_and) || (INS_mul <= ins && ins <= INS_remuw) ||
-        (INS_addw <= ins && ins <= INS_sraw) || (INS_fadd_s <= ins && ins <= INS_fmax_s) ||
-        (INS_fadd_d <= ins && ins <= INS_fmax_d) || (INS_feq_s <= ins && ins <= INS_fle_s) ||
-        (INS_feq_d <= ins && ins <= INS_fle_d) || (INS_lr_w <= ins && ins <= INS_amomaxu_d))
-    {
 #ifdef DEBUG
-        switch (ins)
-        {
-            case INS_add:
-            case INS_sub:
-            case INS_sll:
-            case INS_slt:
-            case INS_sltu:
-            case INS_xor:
-            case INS_srl:
-            case INS_sra:
-            case INS_or:
-            case INS_and:
-
-            case INS_addw:
-            case INS_subw:
-            case INS_sllw:
-            case INS_srlw:
-            case INS_sraw:
-
-            case INS_mul:
-            case INS_mulh:
-            case INS_mulhsu:
-            case INS_mulhu:
-            case INS_div:
-            case INS_divu:
-            case INS_rem:
-            case INS_remu:
-
-            case INS_mulw:
-            case INS_divw:
-            case INS_divuw:
-            case INS_remw:
-            case INS_remuw:
-
-            case INS_fadd_s:
-            case INS_fsub_s:
-            case INS_fmul_s:
-            case INS_fdiv_s:
-            case INS_fsqrt_s:
-            case INS_fsgnj_s:
-            case INS_fsgnjn_s:
-            case INS_fsgnjx_s:
-            case INS_fmin_s:
-            case INS_fmax_s:
-
-            case INS_feq_s:
-            case INS_flt_s:
-            case INS_fle_s:
-
-            case INS_fadd_d:
-            case INS_fsub_d:
-            case INS_fmul_d:
-            case INS_fdiv_d:
-            case INS_fsqrt_d:
-            case INS_fsgnj_d:
-            case INS_fsgnjn_d:
-            case INS_fsgnjx_d:
-            case INS_fmin_d:
-            case INS_fmax_d:
-
-            case INS_feq_d:
-            case INS_flt_d:
-            case INS_fle_d:
-
-            case INS_lr_w:
-            case INS_lr_d:
-            case INS_sc_w:
-            case INS_sc_d:
-            case INS_amoswap_w:
-            case INS_amoswap_d:
-            case INS_amoadd_w:
-            case INS_amoadd_d:
-            case INS_amoxor_w:
-            case INS_amoxor_d:
-            case INS_amoand_w:
-            case INS_amoand_d:
-            case INS_amoor_w:
-            case INS_amoor_d:
-            case INS_amomin_w:
-            case INS_amomin_d:
-            case INS_amomax_w:
-            case INS_amomax_d:
-            case INS_amominu_w:
-            case INS_amominu_d:
-            case INS_amomaxu_w:
-            case INS_amomaxu_d:
-                break;
-            default:
-                NYI_RISCV64("illegal ins within emitIns_R_R_R!");
-        }
-
-#endif
-        // Src/data register for load reserved should be empty
-        assert((ins != INS_lr_w && ins != INS_lr_d) || reg3 == REG_R0);
-
-        code |= ((reg1 & 0x1f) << 7);
-        code |= ((reg2 & 0x1f) << 15);
-        code |= ((reg3 & 0x1f) << 20);
-        if ((INS_fadd_s <= ins && INS_fsqrt_s >= ins) || (INS_fadd_d <= ins && INS_fsqrt_d >= ins))
-        {
-            code |= 0x7 << 12;
-        }
-        else if (INS_lr_w <= ins && ins <= INS_amomaxu_d)
-        {
-            // For now all atomics are seq. consistent as Interlocked.* APIs don't expose acquire/release ordering
-            code |= 0b11 << 25;
-        }
-    }
-    else
-    {
-        NYI_RISCV64("illegal ins within emitIns_R_R_R!");
-    }
+    emitIns_R_R_R_SanityCheck(ins, attr, reg1, reg2, reg3);
+#endif // DEBUG
 
     instrDesc* id = emitNewInstr(attr);
 
-    id->idIns(ins);
     id->idReg1(reg1);
     id->idReg2(reg2);
     id->idReg3(reg3);
-    id->idAddr()->iiaSetInstrEncode(code);
     id->idCodeSize(4);
+
+    id->idAddr()->base = 0;
+
+    switch (ins)
+    {
+        case INS_fadd_s:
+        case INS_fsub_s:
+        case INS_fmul_s:
+        case INS_fdiv_s:
+            id->idRoundModifier(kDynamicRoundingMode);
+            break;
+        case INS_sc_w:
+        case INS_amoswap_w:
+        case INS_amoadd_w:
+        case INS_amoxor_w:
+        case INS_amoand_w:
+        case INS_amoor_w:
+        case INS_amomin_w:
+        case INS_amomax_w:
+        case INS_amominu_w:
+        case INS_amomaxu_w:
+        case INS_sc_d:
+        case INS_amoswap_d:
+        case INS_amoadd_d:
+        case INS_amoxor_d:
+        case INS_amoand_d:
+        case INS_amoor_d:
+        case INS_amomin_d:
+        case INS_amomax_d:
+        case INS_amominu_d:
+        case INS_amomaxu_d:
+            // Current Api is not ready to handle atomic memory ordering
+            id->idAtomicAcquire(true);
+            id->idAtomicRelease(true);
+            break;
+        default:
+            break;
+    }
 
     appendToCurIG(id);
 }
