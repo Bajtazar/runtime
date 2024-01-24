@@ -3043,17 +3043,22 @@ unsigned emitter::emitOutput_RTypeInstr_Atomic(
  *
  */
 
-unsigned emitter::emitOutput_R4TypeInstr(
-    BYTE* dst, instruction ins, regNumber rd, regNumber rs1, regNumber rs2, regNumber rs3) const
+unsigned emitter::emitOutput_R4TypeInstr(BYTE*         dst,
+                                         instruction   ins,
+                                         regNumber     rd,
+                                         regNumber     rs1,
+                                         regNumber     rs2,
+                                         regNumber     rs3,
+                                         unsigned char roundMode) const
 {
     unsigned insCode = emitInsCode(ins);
 #ifdef DEBUG
     emitOutput_R4TypeInstr_SanityCheck(ins, rd, rs1, rs2, rs3);
 #endif // DEBUG
     unsigned opcode = insCode & kInstructionOpcodeMask;
-    unsigned funct3 = (insCode & kInstructionFunct3Mask) >> 12;
-    unsigned funct7 = ((inCode & kInstructionFunct2Mask) >> 25) | (rs3 << 2);
-    return emitOutput_Instr(dst, insEncodeRTypeInstr(opcode, rd, funct3, rs1, rs2, funct7));
+    unsigned funct7 = ((inCode & kInstructionFunct2Mask) >> 25) | (castFloatOrIntegralReg(rs3) << 2);
+    return emitOutput_Instr(dst, insEncodeRTypeInstr(opcode, castFloatOrIntegralReg(rd), roundMode,
+                                                     castFloatOrIntegralReg(rs1), castFloatOrIntegralReg(rs2), funct7));
 }
 
 /*****************************************************************************
@@ -3712,6 +3717,17 @@ BYTE* emitter::emitOutputInstr_OptsNone(BYTE* dst, const instrDesc* id, instruct
             case INS_amomaxu_d:
                 dst += emitOutput_RTypeInstr_Atomic(dst, ins, id->idReg1(), id->idReg2(), id->idReg3(),
                                                     id->idAtomicAcquire(), id->idAtomicRelease());
+                break;
+            case INS_fmadd_s:
+            case INS_fmsub_s:
+            case INS_fnmadd_s:
+            case INS_fnmsub_s:
+            case INS_fmadd_d:
+            case INS_fmsub_d:
+            case INS_fnmadd_d:
+            case INS_fnmsub_d:
+                dst += emitOutput_R4TypeInstr(dst, ins, id->idReg1(), id->idReg2(), id->idReg3(), id->idReg4(),
+                                              id->idRoundModifier());
                 break;
             // S-Type instructions
             case INS_sd:
