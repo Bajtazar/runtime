@@ -293,6 +293,7 @@ void emitter::emitIns_SanityCheck(instruction ins)
         case INS_pause:
         case INS_ecall:
         case INS_ebreak:
+        case INS_nop:
             break;
         default:
             NO_WAY("illegal ins within emitIns!");
