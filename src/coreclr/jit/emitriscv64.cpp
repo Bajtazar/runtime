@@ -1039,6 +1039,34 @@ void emitter::emitIns_R_R_R_SanityCheck(instruction ins, regNumber rd, regNumber
             assert(isGeneralRegisterOrR0(reg1));
             assert(isGeneralRegister(reg2));
             break;
+        case INS_fadd_s:
+        case INS_fsub_s:
+        case INS_fmul_s:
+        case INS_fdiv_s:
+        case INS_fsgnj_s:
+        case INS_fsgnjn_s:
+        case INS_fsgnjx_s:
+        case INS_fmin_s:
+        case INS_fmax_s:
+        case INS_feq_s:
+        case INS_flt_s:
+        case INS_fle_s:
+        case INS_fadd_d:
+        case INS_fsub_d:
+        case INS_fmul_d:
+        case INS_fdiv_d:
+        case INS_fsgnj_d:
+        case INS_fsgnjn_d:
+        case INS_fsgnjx_d:
+        case INS_fmix_d:
+        case INS_fmax_d:
+        case INS_feq_d:
+        case INS_flt_d:
+        case INS_fle_d:
+            assert(isFloatRegister(rd));
+            assert(isFloatRegister(reg1));
+            assert(isFloatRegister(reg2));
+            break;
         default:
             NO_WAY("illegal ins within emitIns_R_R_R!");
             break;
