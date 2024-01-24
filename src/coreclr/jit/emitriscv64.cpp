@@ -317,8 +317,6 @@ void emitter::emitIns(instruction ins)
     id->idIns(ins);
     id->idCodeSize(4);
 
-    id->idAddr()->base = 0;
-
     appendToCurIG(id);
 }
 
@@ -411,8 +409,6 @@ void emitter::emitIns_S_R_R(instruction ins, emitAttr attr, regNumber rs2, regNu
     id->idInsOpt(INS_OPTS_NONE);
     id->idAddr()->iiaLclVar.initLclVarAddr(varx, offs);
     id->idSetIsLclVar();
-
-    id->idAddr()->base = 0;
 
     appendToCurIG(id);
 }
@@ -539,8 +535,6 @@ void emitter::emitIns_R_S(instruction ins, emitAttr attr, regNumber rd, int varx
     id->idInsOpt(INS_OPTS_NONE);
     id->idCodeSize(4);
 
-    id->idAddr()->base = 0;
-
     appendToCurIG(id);
 }
 
@@ -590,8 +584,6 @@ void emitter::emitIns_I(instruction ins, emitAttr attr, ssize_t imm)
     id->idInsOpt(INS_OPTS_NONE);
     id->idCodeSize(4);
 
-    id->idAddr()->base = 0;
-
     appendToCurIG(id);
 }
 
@@ -635,8 +627,6 @@ void emitter::emitIns_R_I(instruction ins, emitAttr attr, regNumber reg, ssize_t
     id->idReg1(reg);
     id->idCodeSize(4);
     id->idInsOpt(INS_OPTS_NONE);
-
-    id->idAddr()->base = 0;
 
     appendToCurIG(id);
 }
@@ -781,8 +771,6 @@ void emitter::emitIns_R_R(
     id->idReg1(reg1);
     id->idReg2(reg2);
     id->idCodeSize(4);
-
-    id->idAddr()->base = 0;
 
     emitIns_R_R_SetFloatInstrAdditionalData(id, ins);
 
@@ -935,8 +923,6 @@ void emitter::emitIns_R_R_I(
     id->idReg2(reg2);
     id->idCodeSize(4);
 
-    id->idAddr()->base = 0;
-
     appendToCurIG(id);
 }
 
@@ -976,8 +962,6 @@ void emitter::emitIns_R_I_I(
     id->idReg1(reg1);
     id->idReg2(static_cast<regNumber>(imm1));
     id->idCodeSize(4);
-
-    id->idAddr()->base = 0;
 
     appendToCurIG(id);
 }
@@ -1096,8 +1080,6 @@ void emitter::emitIns_R_R_R(
     id->idReg3(reg3);
     id->idCodeSize(4);
 
-    id->idAddr()->base = 0;
-
     switch (ins)
     {
         case INS_fadd_s:
@@ -1212,8 +1194,6 @@ void emitter::emitIns_R_R_R_R(
     id->idReg4(reg4);
     id->idRoundModifier(kDynamicRoundingMode);
     id->idCodeSize(4);
-
-    id->idAddr()->base = 0;
 
     appendToCurIG(id);
 }
@@ -3570,194 +3550,186 @@ BYTE* emitter::emitOutputInstr_OptsC(BYTE* dst, instrDesc* id, const insGroup* i
 
 BYTE* emitter::emitOutputInstr_OptsNone(BYTE* dst, const instrDesc* id, instruction ins)
 {
-    // temp - new instructions
-    if (id->idAddr()->base != 0x03)
+    switch (ins)
     {
-        switch (ins)
-        {
-            // U-Type instructions
-            case INS_lui:
-            case INS_auipc:
-                dst += emitOutput_UTypeInstr(dst, ins, id->idReg1(), emitGetInsSC(id));
-                break;
-            // I-Type instructions
-            case INS_mov:
-            case INS_addi:
-            case INS_lb:
-            case INS_lbu:
-            case INS_lh:
-            case INS_lhu:
-            case INS_lw:
-            case INS_lwu:
-            case INS_ld:
-            case INS_flw:
-            case INS_fld:
-            case INS_fence:
-            case INS_slli:
-            case INS_srai:
-            case INS_srli:
-            case INS_slti:
-            case INS_sltiu:
-            case INS_xori:
-            case INS_ori:
-            case INS_addiw:
-            case INS_csrrw:
-            case INS_csrrs:
-            case INS_slliw:
-            case INS_srliw:
-            case INS_sraiw:
-                dst += emitOutput_ITypeInstr(dst, ins, id->idReg1(), id->idReg2(), emitGetInsSC(id));
-                break;
-            // R-Type instrucions
-            case INS_add:
-            case INS_sub:
-            case INS_sll:
-            case INS_slt:
-            case INS_sltu:
-            case INS_xor:
-            case INS_srl:
-            case INS_sra:
-            case INS_or:
-            case INS_and:
-            case INS_addw:
-            case INS_subw:
-            case INS_sllw:
-            case INS_srlw:
-            case INS_sraw:
-            case INS_mul:
-            case INS_mulh:
-            case INS_mulhsu:
-            case INS_mulhu:
-            case INS_rem:
-            case INS_remu:
-            case INS_mulw:
-            case INS_remw:
-            case INS_remuw:
-            case INS_div:
-            case INS_divu:
-            case INS_divw:
-            case INS_fmv_x_d:
-            case INS_fmv_x_w:
-            case INS_fclass_s:
-            case INS_fclass_d:
-            case INS_fmv_w_x:
-            case INS_fmv_d_x:
-            case INS_fsgnj_s:
-            case INS_fsgnjn_s:
-            case INS_fsgnjx_s:
-            case INS_fmin_s:
-            case INS_fmax_s:
-            case INS_feq_s:
-            case INS_flt_s:
-            case INS_fle_s:
-            case INS_fsgnj_d:
-            case INS_fsgnjn_d:
-            case INS_fsgnjx_d:
-            case INS_fmin_d:
-            case INS_fmax_d:
-            case INS_feq_d:
-            case INS_flt_d:
-            case INS_fle_d:
-                dst += emitOutput_RTypeInstr(dst, ins, id->idReg1(), id->idReg2(), id->idReg3());
-                break;
-            // R-Type instructions with rounding mode
-            case INS_fadd_s:
-            case INS_fsub_s:
-            case INS_fmul_s:
-            case INS_fdiv_s:
-            case INS_fadd_d:
-            case INS_fsub_d:
-            case INS_fmul_d:
-            case INS_fdiv_d:
-            case INS_fsqrt_s:
-            case INS_fsqrt_d:
-            case INS_fcvt_d_s:
-            case INS_fcvt_w_s:
-            case INS_fcvt_w_d:
-            case INS_fcvt_s_w:
-            case INS_fcvt_d_w:
-            case INS_fcvt_wu_s:
-            case INS_fcvt_wu_d:
-            case INS_fcvt_s_d:
-            case INS_fcvt_s_wu:
-            case INS_fcvt_d_wu:
-            case INS_fcvt_l_s:
-            case INS_fcvt_l_d:
-            case INS_fcvt_s_l:
-            case INS_fcvt_d_l:
-            case INS_fcvt_lu_s:
-            case INS_fcvt_lu_d:
-            case INS_fcvt_s_lu:
-            case INS_fcvt_d_lu:
-                dst += emitOutput_RTypeInstr_RoundMode(dst, ins, id->idReg1(), id->idReg2(), id->idReg3(),
-                                                       id->idRoundModifier());
-                break;
-            // R-Type atomic instructions
-            case INS_lr_w:
-            case INS_lr_d:
-            case INS_sc_w:
-            case INS_amoswap_w:
-            case INS_amoadd_w:
-            case INS_amoxor_w:
-            case INS_amoand_w:
-            case INS_amoor_w:
-            case INS_amomin_w:
-            case INS_amomax_w:
-            case INS_amominu_w:
-            case INS_amomaxu_w:
-            case INS_sc_d:
-            case INS_amoswap_d:
-            case INS_amoadd_d:
-            case INS_amoxor_d:
-            case INS_amoand_d:
-            case INS_amoor_d:
-            case INS_amomin_d:
-            case INS_amomax_d:
-            case INS_amominu_d:
-            case INS_amomaxu_d:
-                dst += emitOutput_RTypeInstr_Atomic(dst, ins, id->idReg1(), id->idReg2(), id->idReg3(),
-                                                    id->idAtomicAcquire(), id->idAtomicRelease());
-                break;
-            case INS_fmadd_s:
-            case INS_fmsub_s:
-            case INS_fnmadd_s:
-            case INS_fnmsub_s:
-            case INS_fmadd_d:
-            case INS_fmsub_d:
-            case INS_fnmadd_d:
-            case INS_fnmsub_d:
-                dst += emitOutput_R4TypeInstr(dst, ins, id->idReg1(), id->idReg2(), id->idReg3(), id->idReg4(),
-                                              id->idRoundModifier());
-                break;
-            // S-Type instructions
-            case INS_sd:
-            case INS_sw:
-            case INS_sh:
-            case INS_sb:
-            case INS_fsd:
-            case INS_fsw:
-                dst += emitOutput_STypeInstr(dst, ins, id->idReg1(), id->idReg2(), emitGetInsSC(id));
-                break;
-            // J-Type instrunction
-            case INS_jal:
-                dst += emitOutput_JTypeInstr(dst, ins, id->idReg1(), emitGetInsSC(id));
-                break;
-            // Non-parametrized instructions - can be translated directly
-            case INS_fence_tso:
-            case INS_pause:
-            case INS_ecall:
-            case INS_ebreak:
-                dst += emitOutput_Instr(dst, emitInsCode(ins));
-                break;
-            default:
-                NO_WAY("illegal instruction within emitOutputInstr_OptsNone!");
-                break;
-        }
-    }
-    else
-    {
-        // old iiaGetInstrEncode style
-        dst += emitOutput_Instr(dst, id->idAddr()->iiaGetInstrEncode());
+        // U-Type instructions
+        case INS_lui:
+        case INS_auipc:
+            dst += emitOutput_UTypeInstr(dst, ins, id->idReg1(), emitGetInsSC(id));
+            break;
+        // I-Type instructions
+        case INS_mov:
+        case INS_addi:
+        case INS_lb:
+        case INS_lbu:
+        case INS_lh:
+        case INS_lhu:
+        case INS_lw:
+        case INS_lwu:
+        case INS_ld:
+        case INS_flw:
+        case INS_fld:
+        case INS_fence:
+        case INS_slli:
+        case INS_srai:
+        case INS_srli:
+        case INS_slti:
+        case INS_sltiu:
+        case INS_xori:
+        case INS_ori:
+        case INS_addiw:
+        case INS_csrrw:
+        case INS_csrrs:
+        case INS_slliw:
+        case INS_srliw:
+        case INS_sraiw:
+            dst += emitOutput_ITypeInstr(dst, ins, id->idReg1(), id->idReg2(), emitGetInsSC(id));
+            break;
+        // R-Type instrucions
+        case INS_add:
+        case INS_sub:
+        case INS_sll:
+        case INS_slt:
+        case INS_sltu:
+        case INS_xor:
+        case INS_srl:
+        case INS_sra:
+        case INS_or:
+        case INS_and:
+        case INS_addw:
+        case INS_subw:
+        case INS_sllw:
+        case INS_srlw:
+        case INS_sraw:
+        case INS_mul:
+        case INS_mulh:
+        case INS_mulhsu:
+        case INS_mulhu:
+        case INS_rem:
+        case INS_remu:
+        case INS_mulw:
+        case INS_remw:
+        case INS_remuw:
+        case INS_div:
+        case INS_divu:
+        case INS_divw:
+        case INS_fmv_x_d:
+        case INS_fmv_x_w:
+        case INS_fclass_s:
+        case INS_fclass_d:
+        case INS_fmv_w_x:
+        case INS_fmv_d_x:
+        case INS_fsgnj_s:
+        case INS_fsgnjn_s:
+        case INS_fsgnjx_s:
+        case INS_fmin_s:
+        case INS_fmax_s:
+        case INS_feq_s:
+        case INS_flt_s:
+        case INS_fle_s:
+        case INS_fsgnj_d:
+        case INS_fsgnjn_d:
+        case INS_fsgnjx_d:
+        case INS_fmin_d:
+        case INS_fmax_d:
+        case INS_feq_d:
+        case INS_flt_d:
+        case INS_fle_d:
+            dst += emitOutput_RTypeInstr(dst, ins, id->idReg1(), id->idReg2(), id->idReg3());
+            break;
+        // R-Type instructions with rounding mode
+        case INS_fadd_s:
+        case INS_fsub_s:
+        case INS_fmul_s:
+        case INS_fdiv_s:
+        case INS_fadd_d:
+        case INS_fsub_d:
+        case INS_fmul_d:
+        case INS_fdiv_d:
+        case INS_fsqrt_s:
+        case INS_fsqrt_d:
+        case INS_fcvt_d_s:
+        case INS_fcvt_w_s:
+        case INS_fcvt_w_d:
+        case INS_fcvt_s_w:
+        case INS_fcvt_d_w:
+        case INS_fcvt_wu_s:
+        case INS_fcvt_wu_d:
+        case INS_fcvt_s_d:
+        case INS_fcvt_s_wu:
+        case INS_fcvt_d_wu:
+        case INS_fcvt_l_s:
+        case INS_fcvt_l_d:
+        case INS_fcvt_s_l:
+        case INS_fcvt_d_l:
+        case INS_fcvt_lu_s:
+        case INS_fcvt_lu_d:
+        case INS_fcvt_s_lu:
+        case INS_fcvt_d_lu:
+            dst += emitOutput_RTypeInstr_RoundMode(dst, ins, id->idReg1(), id->idReg2(), id->idReg3(),
+                                                   id->idRoundModifier());
+            break;
+        // R-Type atomic instructions
+        case INS_lr_w:
+        case INS_lr_d:
+        case INS_sc_w:
+        case INS_amoswap_w:
+        case INS_amoadd_w:
+        case INS_amoxor_w:
+        case INS_amoand_w:
+        case INS_amoor_w:
+        case INS_amomin_w:
+        case INS_amomax_w:
+        case INS_amominu_w:
+        case INS_amomaxu_w:
+        case INS_sc_d:
+        case INS_amoswap_d:
+        case INS_amoadd_d:
+        case INS_amoxor_d:
+        case INS_amoand_d:
+        case INS_amoor_d:
+        case INS_amomin_d:
+        case INS_amomax_d:
+        case INS_amominu_d:
+        case INS_amomaxu_d:
+            dst += emitOutput_RTypeInstr_Atomic(dst, ins, id->idReg1(), id->idReg2(), id->idReg3(),
+                                                id->idAtomicAcquire(), id->idAtomicRelease());
+            break;
+        // R4-Type instructions
+        case INS_fmadd_s:
+        case INS_fmsub_s:
+        case INS_fnmadd_s:
+        case INS_fnmsub_s:
+        case INS_fmadd_d:
+        case INS_fmsub_d:
+        case INS_fnmadd_d:
+        case INS_fnmsub_d:
+            dst += emitOutput_R4TypeInstr(dst, ins, id->idReg1(), id->idReg2(), id->idReg3(), id->idReg4(),
+                                          id->idRoundModifier());
+            break;
+        // S-Type instructions
+        case INS_sd:
+        case INS_sw:
+        case INS_sh:
+        case INS_sb:
+        case INS_fsd:
+        case INS_fsw:
+            dst += emitOutput_STypeInstr(dst, ins, id->idReg1(), id->idReg2(), emitGetInsSC(id));
+            break;
+        // J-Type instrunction
+        case INS_jal:
+            dst += emitOutput_JTypeInstr(dst, ins, id->idReg1(), emitGetInsSC(id));
+            break;
+        // Non-parametrized instructions - can be translated directly
+        case INS_fence_tso:
+        case INS_pause:
+        case INS_ecall:
+        case INS_ebreak:
+            dst += emitOutput_Instr(dst, emitInsCode(ins));
+            break;
+        default:
+            NO_WAY("illegal instruction within emitOutputInstr_OptsNone!");
+            break;
     }
     return dst;
 }

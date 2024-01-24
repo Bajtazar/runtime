@@ -1026,28 +1026,12 @@ protected:
             struct
             {
                 emitLclVarAddr iiaLclVar;
-                unsigned char  base : 2;
                 regNumber      _idReg3 : REGNUM_BITS;
                 regNumber      _idReg4 : REGNUM_BITS;
                 unsigned char  _roundModifier : 3;
                 bool           _atomicAcquire : 1;
                 bool           _atomicRelease : 1;
             };
-
-            struct
-            {
-                unsigned int reserved;
-                unsigned int iiaEncodedInstr; // instruction's binary encoding.
-            };
-
-            void iiaSetInstrEncode(unsigned int encode)
-            {
-                iiaEncodedInstr = encode;
-            }
-            unsigned int iiaGetInstrEncode() const
-            {
-                return iiaEncodedInstr;
-            }
 #endif // defined(TARGET_RISCV64)
 
         } _idAddrUnion;
