@@ -1010,6 +1010,24 @@ void emitter::emitIns_R_R_R_SanityCheck(instruction ins, regNumber rd, regNumber
         case INS_mulw:
         case INS_remw:
         case INS_remuw:
+        case INS_amoswap_w:
+        case INS_amoadd_w:
+        case INS_amoxor_w:
+        case INS_amoand_w:
+        case INS_amoor_w:
+        case INS_amomin_w:
+        case INS_amomax_w:
+        case INS_amominu_w:
+        case INS_amomaxu_w:
+        case INS_amoswap_d:
+        case INS_amoadd_d:
+        case INS_amoxor_d:
+        case INS_amoand_d:
+        case INS_amoor_d:
+        case INS_amomin_d:
+        case INS_amomax_d:
+        case INS_amominu_d:
+        case INS_amomaxu_d:
             assert(isGeneralRegisterOrR0(rd));
             assert(isGeneralRegisterOrR0(reg1));
             assert(isGeneralRegisterOrR0(reg2));
