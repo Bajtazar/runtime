@@ -3518,12 +3518,54 @@ BYTE* emitter::emitOutputInstr_OptsNone(BYTE* dst, const instrDesc* id, instruct
                 break;
             // R-Type instrucions
             case INS_add:
+            case INS_sub:
+            case INS_sll:
+            case INS_slt:
+            case INS_sltu:
+            case INS_xor:
+            case INS_srl:
+            case INS_sra:
+            case INS_or:
+            case INS_and:
+            case INS_addw:
+            case INS_subw:
+            case INS_sllw:
+            case INS_srlw:
+            case INS_sraw:
+            case INS_mul:
+            case INS_mulh:
+            case INS_mulhsu:
+            case INS_mulhu:
+            case INS_rem:
+            case INS_remu:
+            case INS_mulw:
+            case INS_remw:
+            case INS_remuw:
+            case INS_div:
+            case INS_divu:
+            case INS_divw:
             case INS_fmv_x_d:
             case INS_fmv_x_w:
             case INS_fclass_s:
             case INS_fclass_d:
             case INS_fmv_w_x:
             case INS_fmv_d_x:
+            case INS_fsgnj_s:
+            case INS_fsgnjn_s:
+            case INS_fsgnjx_s:
+            case INS_fmin_s:
+            case INS_fmax_s:
+            case INS_feq_s:
+            case INS_flt_s:
+            case INS_fle_s:
+            case INS_fsgnj_d:
+            case INS_fsgnjn_d:
+            case INS_fsgnjx_d:
+            case INS_fmin_d:
+            case INS_fmax_d:
+            case INS_feq_d:
+            case INS_flt_d:
+            case INS_fle_d:
                 dst += emitOutput_RTypeInstr(dst, ins, id->idReg1(), id->idReg2(), id->idReg3());
                 break;
             // R-Type instructions with rounding mode
