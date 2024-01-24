@@ -1165,6 +1165,32 @@ void emitter::emitIns_R_R_I_I(
     NYI_RISCV64("emitIns_R_R_I_I-----unimplemented/unused on RISCV64 yet----");
 }
 
+#ifdef DEBUG
+
+void emitter::emitIns_R_R_R_R_SanityCheck(instruction ins, regNumber rd, regNumber rs1, regNumber rs2, regNumber rs3) {
+    switch (ins)
+    {
+        case INS_fmadd_s:
+        case INS_fmsub_s:
+        case INS_fnmadd_s:
+        case INS_fnmsub_s:
+        case INS_fmadd_d:
+        case INS_fmsub_d:
+        case INS_fnmadd_d:
+        case INS_fnmsub_d:
+            assert(isFloatReg(rd));
+            assert(isFloatReg(rs1));
+            assert(isFloatReg(rs2));
+            assert(isFloatReg(rs3));
+            break;
+        default:
+            NO_WAY("illegal ins within emitIns_R_R_R_R!");
+            break;
+    }
+}
+
+#endif // DEBUG
+
 /*****************************************************************************
  *
  *  Add an instruction referencing four registers.
@@ -1173,7 +1199,22 @@ void emitter::emitIns_R_R_I_I(
 void emitter::emitIns_R_R_R_R(
     instruction ins, emitAttr attr, regNumber reg1, regNumber reg2, regNumber reg3, regNumber reg4)
 {
-    NYI_RISCV64("emitIns_R_R_R_R-----unimplemented/unused on RISCV64 yet----");
+#ifdef DEBUG
+    emitIns_R_R_R_R_SanityCheck(ins, reg1, reg2, reg3, reg4);
+#endif // DEBUG
+
+    instrDesc* id = emitNewInstr(attr);
+
+    id->idReg1(reg1);
+    id->idReg2(reg2);
+    id->idReg3(reg3);
+    id->idReg4(reg4);
+    id->idRoundModifier(kDynamicRoundingMode);
+    id->idCodeSize(4);
+
+    id->idAddr()->base = 0;
+
+    appendToCurIG(id);
 }
 
 /*****************************************************************************
