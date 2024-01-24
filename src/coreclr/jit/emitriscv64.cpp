@@ -1045,14 +1045,14 @@ void emitter::emitIns_R_R_R_SanityCheck(instruction ins, regNumber rd, regNumber
         case INS_fsgnj_d:
         case INS_fsgnjn_d:
         case INS_fsgnjx_d:
-        case INS_fmix_d:
+        case INS_fmin_d:
         case INS_fmax_d:
         case INS_feq_d:
         case INS_flt_d:
         case INS_fle_d:
-            assert(isFloatRegister(rd));
-            assert(isFloatRegister(reg1));
-            assert(isFloatRegister(reg2));
+            assert(isFloatReg(rd));
+            assert(isFloatReg(reg1));
+            assert(isFloatReg(reg2));
             break;
         default:
             NO_WAY("illegal ins within emitIns_R_R_R!");
@@ -1070,7 +1070,7 @@ void emitter::emitIns_R_R_R(
     instruction ins, emitAttr attr, regNumber reg1, regNumber reg2, regNumber reg3, insOpts opt) /* = INS_OPTS_NONE */
 {
 #ifdef DEBUG
-    emitIns_R_R_R_SanityCheck(ins, attr, reg1, reg2, reg3);
+    emitIns_R_R_R_SanityCheck(ins, reg1, reg2, reg3);
 #endif // DEBUG
 
     instrDesc* id = emitNewInstr(attr);
@@ -3036,7 +3036,7 @@ unsigned emitter::emitOutput_R4TypeInstr(BYTE*         dst,
     emitOutput_R4TypeInstr_SanityCheck(ins, rd, rs1, rs2, rs3);
 #endif // DEBUG
     unsigned opcode = insCode & kInstructionOpcodeMask;
-    unsigned funct7 = ((inCode & kInstructionFunct2Mask) >> 25) | (castFloatOrIntegralReg(rs3) << 2);
+    unsigned funct7 = ((insCode & kInstructionFunct2Mask) >> 25) | (castFloatOrIntegralReg(rs3) << 2);
     return emitOutput_Instr(dst, insEncodeRTypeInstr(opcode, castFloatOrIntegralReg(rd), roundMode,
                                                      castFloatOrIntegralReg(rs1), castFloatOrIntegralReg(rs2), funct7));
 }
