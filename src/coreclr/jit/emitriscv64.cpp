@@ -2147,6 +2147,7 @@ AGAIN:
 
 unsigned emitter::emitOutput_Instr(BYTE* dst, code_t code) const
 {
+    assert(dst != nullptr);
     assert(sizeof(code_t) == 4);
     memcpy(dst + writeableOffset, &code, sizeof(code_t));
     return sizeof(code_t);
@@ -2738,20 +2739,84 @@ ssize_t emitter::emitOutputInstrJumpDistance(const BYTE* src, const insGroup* ig
 
         emitFwdJumps = true;
 
-        // The target offset will be closer by at least 'emitOffsAdj', but only if this
-        // jump doesn't cross the hot-cold boundary.
-        if (!emitJumpCrossHotColdBoundary(srcOffs, dstOffs))
-        {
-            distVal -= emitOffsAdj;
-            dstOffs -= emitOffsAdj;
-        }
-        jmp->idjOffs = dstOffs;
-        if (jmp->idjOffs != dstOffs)
-        {
-            IMPL_LIMITATION("Method is too large");
-        }
-    }
-    return distVal;
+/*static*/ emitter::code_t emitter::insEncodeRTypeInstr(
+    unsigned opcode, unsigned rd, unsigned funct3, unsigned rs1, unsigned rs2, unsigned funct7)
+{
+    assertCodeLength(opcode, 7);
+    assertCodeLength(rd, 5);
+    assertCodeLength(funct3, 3);
+    assertCodeLength(rs1, 5);
+    assertCodeLength(rs2, 5);
+    assertCodeLength(funct7, 7);
+
+    return opcode | (rd << 7) | (funct3 << 12) | (rs1 << 15) | (rs2 << 20) | (funct7 << 25);
+}
+
+static constexpr size_t NBitMask(uint8_t bits)
+{
+    return (static_cast<size_t>(1) << bits) - 1;
+}
+
+template <uint8_t MaskSize>
+static ssize_t LowerNBitsOfWord(ssize_t word)
+{
+    static_assert(MaskSize < 32, "Given mask size is bigger than the word itself");
+    static_assert(MaskSize > 0, "Given mask size cannot be zero");
+
+    static constexpr size_t kMask = NBitMask(MaskSize);
+
+    return word & kMask;
+}
+
+template <uint8_t MaskSize>
+static ssize_t UpperNBitsOfWord(ssize_t word)
+{
+    static constexpr size_t kShift = 32 - MaskSize;
+
+    return LowerNBitsOfWord<MaskSize>(word >> kShift);
+}
+
+template <uint8_t MaskSize>
+static ssize_t UpperNBitsOfWordSignExtend(ssize_t word)
+{
+    static constexpr unsigned kSignExtend = 1 << (31 - MaskSize);
+
+    return UpperNBitsOfWord<MaskSize>(word + kSignExtend);
+}
+
+static ssize_t UpperWordOfDoubleWord(ssize_t immediate)
+{
+    return immediate >> 32;
+}
+
+static ssize_t LowerWordOfDoubleWord(ssize_t immediate)
+{
+    static constexpr size_t kWordMask = NBitMask(32);
+
+    return immediate & kWordMask;
+}
+
+template <uint8_t UpperMaskSize, uint8_t LowerMaskSize>
+static ssize_t DoubleWordSignExtend(ssize_t doubleWord)
+{
+    static constexpr size_t kLowerSignExtend = static_cast<size_t>(1) << (63 - LowerMaskSize);
+    static constexpr size_t kUpperSignExtend = static_cast<size_t>(1) << (63 - UpperMaskSize);
+
+    return doubleWord + (kLowerSignExtend | kUpperSignExtend);
+}
+
+template <uint8_t UpperMaskSize>
+static ssize_t UpperWordOfDoubleWordSingleSignExtend(ssize_t doubleWord)
+{
+    static constexpr size_t kUpperSignExtend = static_cast<size_t>(1) << (31 - UpperMaskSize);
+
+    return UpperWordOfDoubleWord(doubleWord + kUpperSignExtend);
+}
+
+template <uint8_t UpperMaskSize, uint8_t LowerMaskSize>
+static ssize_t UpperWordOfDoubleWordDoubleSignExtend(ssize_t doubleWord)
+{
+    return UpperWordOfDoubleWord(DoubleWordSignExtend<UpperMaskSize, LowerMaskSize>(doubleWord));
 }
 
 /*static*/ unsigned emitter::TrimSignedToImm12(int imm12)
@@ -2808,7 +2873,7 @@ BYTE* emitter::emitOutputInstr_OptsReloc(BYTE* dst, const instrDesc* id, instruc
 
 BYTE* emitter::emitOutputInstr_OptsI(BYTE* dst, const instrDesc* id)
 {
-    ssize_t         immediate = BitCast<ssize_t>(id->idAddr()->iiaAddr);
+    ssize_t         immediate = reinterpret_cast<ssize_t>(id->idAddr()->iiaAddr);
     const regNumber reg1      = id->idReg1();
 
     switch (id->idCodeSize())
@@ -2882,7 +2947,7 @@ BYTE* emitter::emitOutputInstr_OptsRc(BYTE* dst, const instrDesc* id, instructio
 
 BYTE* emitter::emitOutputInstr_OptsRcReloc(BYTE* dst, instruction* ins, regNumber reg1)
 {
-    ssize_t immediate = BitCast<ssize_t>(emitConsBlock) - BitCast<ssize_t>(dst);
+    ssize_t immediate = emitConsBlock - dst;
     assert(immediate > 0);
     assert((immediate & 0x03) == 0);
 
@@ -2902,7 +2967,7 @@ BYTE* emitter::emitOutputInstr_OptsRcReloc(BYTE* dst, instruction* ins, regNumbe
 
 BYTE* emitter::emitOutputInstr_OptsRcNoReloc(BYTE* dst, instruction* ins, unsigned offset, regNumber reg1)
 {
-    ssize_t immediate = BitCast<ssize_t>(emitConsBlock) + offset;
+    ssize_t immediate = reinterpret_cast<ssize_t>(emitConsBlock) + offset;
     assert((immediate >> 40) == 0);
     regNumber rsvdReg = codeGen->rsGetRsvdReg();
 
@@ -2936,7 +3001,7 @@ BYTE* emitter::emitOutputInstr_OptsRl(BYTE* dst, instrDesc* id, instruction* ins
 
 BYTE* emitter::emitOutputInstr_OptsRlReloc(BYTE* dst, ssize_t igOffs, regNumber reg1)
 {
-    ssize_t immediate = BitCast<ssize_t>(emitCodeBlock) + igOffs - BitCast<ssize_t>(dst);
+    ssize_t immediate = (emitCodeBlock - dst) + igOffs;
     assert((immediate & 0x03) == 0);
 
     dst += emitOutput_UTypeInstr(dst, INS_auipc, reg1, UpperNBitsOfWordSignExtend<20>(immediate));
@@ -2946,7 +3011,7 @@ BYTE* emitter::emitOutputInstr_OptsRlReloc(BYTE* dst, ssize_t igOffs, regNumber 
 
 BYTE* emitter::emitOutputInstr_OptsRlNoReloc(BYTE* dst, ssize_t igOffs, regNumber reg1)
 {
-    ssize_t immediate = BitCast<ssize_t>(emitCodeBlock) + igOffs;
+    ssize_t immediate = reinterpret_cast<ssize_t>(emitCodeBlock) + igOffs;
     assert((immediate >> (32 + 20)) == 0);
 
     regNumber rsvdReg      = codeGen->rsGetRsvdReg();
@@ -2985,9 +3050,6 @@ BYTE* emitter::emitOutputInstr_OptsJalr(BYTE* dst, instrDescJmp* jmp, const insG
 
 BYTE* emitter::emitOutputInstr_OptsJalr8(BYTE* dst, const instrDescJmp* jmp, instruction ins, ssize_t immediate)
 {
-    assert((INS_blt <= ins && ins <= INS_bgeu) || (INS_beq == ins) || (INS_bne == ins) || (INS_bnez == ins) ||
-           (INS_beqz == ins));
-
     regNumber reg2 = ((ins != INS_beqz) && (ins != INS_bnez)) ? jmp->idReg2() : REG_R0;
 
     dst += emitOutput_BTypeInstr_InvertComparation(dst, ins, jmp->idReg1(), reg2, 0x8);
