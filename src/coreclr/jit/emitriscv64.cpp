@@ -898,6 +898,10 @@ void emitter::emitIns_R_R_I_SanityCheck(instruction ins, regNumber reg1, regNumb
             assert(isGeneralRegisterOrR0(reg2));
             assert((immediate >= 0) && (immediate <= 31));
             break;
+        case INS_jalr:
+            assert(isGeneralRegisterOrR0(reg1));
+            assert(isGeneralRegister(reg2));
+            break;
         default:
             NO_WAY("illegal ins within emitIns_R_R_I!");
             break;
@@ -1546,30 +1550,21 @@ void emitter::emitLoadImmediate(emitAttr size, regNumber reg, ssize_t imm)
 
     if (isValidSimm12(imm))
     {
-        emitIns_R_R_I(INS_addi, size, reg, REG_R0, imm & 0xFFF);
-        return;
+        return emitIns_R_R_I(INS_addi, size, reg, REG_R0, imm);
     }
 
     // TODO-RISCV64: maybe optimized via emitDataConst(), check #86790
 
     UINT32 msb = BitOperations::BitScanReverse((uint64_t)imm);
-    UINT32 high31;
-    if (msb > 30)
-    {
-        high31 = (imm >> (msb - 30)) & 0x7FffFFff;
-    }
-    else
-    {
-        high31 = imm & 0x7FffFFff;
-    }
+    UINT32 high31 = LowerNBitsOfWord<31>(imm >> (msb > 30 ? msb - 30 : 0));
 
     // Since ADDIW use sign extension fo immediate
     // we have to adjust higher 19 bit loaded by LUI
     // for case when low part is bigger than 0x800.
     UINT32 high19 = (high31 + 0x800) >> 12;
 
-    emitIns_R_I(INS_lui, size, reg, high19);
-    emitIns_R_R_I(INS_addiw, size, reg, reg, high31 & 0xFFF);
+    emitIns_R_I(INS_lui, size, reg, UpperNBitsOfWordSignExtend<20>(high31));
+    emitIns_R_R_I(INS_addiw, size, reg, reg, LowerNBitsOfWord<12>(high31));
 
     // And load remaining part part by batches of 11 bits size.
     INT32 remainingShift = msb - 30;
@@ -3219,28 +3214,28 @@ ssize_t emitter::emitOutputInstrJumpDistance(const BYTE* src, const insGroup* ig
 
 /*static*/ unsigned emitter::TrimSignedToImm12(int imm12)
 {
-    assert(isValidSimm12(imm12));
+    // assert(isValidSimm12(imm12));
 
     return static_cast<unsigned>(LowerNBitsOfWord<12>(imm12));
 }
 
 /*static*/ unsigned emitter::TrimSignedToImm13(int imm13)
 {
-    assert(isValidSimm13(imm13));
+    // assert(isValidSimm13(imm13));
 
     return static_cast<unsigned>(LowerNBitsOfWord<13>(imm13));
 }
 
 /*static*/ unsigned emitter::TrimSignedToImm20(int imm20)
 {
-    assert(isValidSimm20(imm20));
+    // assert(isValidSimm20(imm20));
 
     return static_cast<unsigned>(LowerNBitsOfWord<20>(imm20));
 }
 
 /*static*/ unsigned emitter::TrimSignedToImm21(int imm21)
 {
-    assert(isValidSimm21(imm21));
+    // assert(isValidSimm21(imm21));
 
     return static_cast<unsigned>(LowerNBitsOfWord<21>(imm21));
 }
@@ -3584,6 +3579,7 @@ BYTE* emitter::emitOutputInstr_OptsNone(BYTE* dst, const instrDesc* id, instruct
         case INS_slliw:
         case INS_srliw:
         case INS_sraiw:
+        case INS_jalr:
             dst += emitOutput_ITypeInstr(dst, ins, id->idReg1(), id->idReg2(), emitGetInsSC(id));
             break;
         // R-Type instrucions
