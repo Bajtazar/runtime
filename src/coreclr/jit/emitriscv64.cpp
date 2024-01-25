@@ -2738,85 +2738,20 @@ ssize_t emitter::emitOutputInstrJumpDistance(const BYTE* src, const insGroup* ig
         // This is a forward jump
 
         emitFwdJumps = true;
-
-/*static*/ emitter::code_t emitter::insEncodeRTypeInstr(
-    unsigned opcode, unsigned rd, unsigned funct3, unsigned rs1, unsigned rs2, unsigned funct7)
-{
-    assertCodeLength(opcode, 7);
-    assertCodeLength(rd, 5);
-    assertCodeLength(funct3, 3);
-    assertCodeLength(rs1, 5);
-    assertCodeLength(rs2, 5);
-    assertCodeLength(funct7, 7);
-
-    return opcode | (rd << 7) | (funct3 << 12) | (rs1 << 15) | (rs2 << 20) | (funct7 << 25);
-}
-
-static constexpr size_t NBitMask(uint8_t bits)
-{
-    return (static_cast<size_t>(1) << bits) - 1;
-}
-
-template <uint8_t MaskSize>
-static ssize_t LowerNBitsOfWord(ssize_t word)
-{
-    static_assert(MaskSize < 32, "Given mask size is bigger than the word itself");
-    static_assert(MaskSize > 0, "Given mask size cannot be zero");
-
-    static constexpr size_t kMask = NBitMask(MaskSize);
-
-    return word & kMask;
-}
-
-template <uint8_t MaskSize>
-static ssize_t UpperNBitsOfWord(ssize_t word)
-{
-    static constexpr size_t kShift = 32 - MaskSize;
-
-    return LowerNBitsOfWord<MaskSize>(word >> kShift);
-}
-
-template <uint8_t MaskSize>
-static ssize_t UpperNBitsOfWordSignExtend(ssize_t word)
-{
-    static constexpr unsigned kSignExtend = 1 << (31 - MaskSize);
-
-    return UpperNBitsOfWord<MaskSize>(word + kSignExtend);
-}
-
-static ssize_t UpperWordOfDoubleWord(ssize_t immediate)
-{
-    return immediate >> 32;
-}
-
-static ssize_t LowerWordOfDoubleWord(ssize_t immediate)
-{
-    static constexpr size_t kWordMask = NBitMask(32);
-
-    return immediate & kWordMask;
-}
-
-template <uint8_t UpperMaskSize, uint8_t LowerMaskSize>
-static ssize_t DoubleWordSignExtend(ssize_t doubleWord)
-{
-    static constexpr size_t kLowerSignExtend = static_cast<size_t>(1) << (63 - LowerMaskSize);
-    static constexpr size_t kUpperSignExtend = static_cast<size_t>(1) << (63 - UpperMaskSize);
-
-    return doubleWord + (kLowerSignExtend | kUpperSignExtend);
-}
-
-template <uint8_t UpperMaskSize>
-static ssize_t UpperWordOfDoubleWordSingleSignExtend(ssize_t doubleWord)
-{
-    static constexpr size_t kUpperSignExtend = static_cast<size_t>(1) << (31 - UpperMaskSize);
-
-    return UpperWordOfDoubleWord(doubleWord + kUpperSignExtend);
-}
-
-template <uint8_t UpperMaskSize, uint8_t LowerMaskSize>
-static ssize_t UpperWordOfDoubleWordDoubleSignExtend(ssize_t doubleWord)
-{
-    return UpperWordOfDoubleWord(DoubleWordSignExtend<UpperMaskSize, LowerMaskSize>(doubleWord));
+        // The target offset will be closer by at least 'emitOffsAdj', but only if this
+        // jump doesn't cross the hot-cold boundary.
+        if (!emitJumpCrossHotColdBoundary(srcOffs, dstOffs))
+        {
+            distVal -= emitOffsAdj;
+            dstOffs -= emitOffsAdj;
+        }
+        jmp->idjOffs = dstOffs;
+        if (jmp->idjOffs != dstOffs)
+        {
+            IMPL_LIMITATION("Method is too large");
+        }
+    }
+    return distVal;
 }
 
 /*static*/ unsigned emitter::TrimSignedToImm12(int imm12)
