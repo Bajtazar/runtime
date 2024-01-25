@@ -1523,6 +1523,14 @@ void emitter::dispIns(instrDesc* id)
 
 void emitter::appendToCurIG(instrDesc* id)
 {
+    printf("INSTRUCTION HAS BEEN EMITTED\n");
+    printf("--->INSTRUCTION GROUP ADDRESS (ACHTUNG): %p\n", id);
+    printf("--->Reg1: %d\n", id->idReg1());
+    printf("--->Reg2: %d\n", id->idReg2());
+    printf("--->Reg3: %d\n", id->idReg3());
+    printf("--->Reg4: %d\n", id->idReg4());
+    printf("--->Cns: %d\n", emitGetInsSC(id));
+    printf("--->Src: %d\n", id->IDDEBUGINSTRSOURCE);
 #ifdef TARGET_ARMARCH
     if (id->idIns() == INS_dmb)
     {
@@ -1711,7 +1719,7 @@ void* emitter::emitAllocAnyInstr(size_t sz, emitAttr opsz)
     C_ASSERT(sizeof(emitter::emitAddrMode) <= sizeof(void*));
 #endif // TARGET_XARCH
     C_ASSERT(sizeof(emitLclVarAddr) <= sizeof(void*));
-    C_ASSERT(sizeof(emitter::instrDesc) == (SMALL_IDSC_SIZE + sizeof(void*)));
+    // C_ASSERT(sizeof(emitter::instrDesc) == (SMALL_IDSC_SIZE + sizeof(void*)));
 
     emitInsCount++;
 

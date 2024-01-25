@@ -1724,6 +1724,8 @@ protected:
             assert(!idIsSmallDsc());
             return &this->_idAddrUnion;
         }
+
+        unsigned IDDEBUGINSTRSOURCE : 5;
     }; // End of  struct instrDesc
 
 #if defined(TARGET_XARCH)

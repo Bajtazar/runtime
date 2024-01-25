@@ -318,6 +318,8 @@ void emitter::emitIns(instruction ins)
     id->idIns(ins);
     id->idCodeSize(4);
 
+    id->IDDEBUGINSTRSOURCE = 1;
+
     appendToCurIG(id);
 }
 
@@ -410,6 +412,8 @@ void emitter::emitIns_S_R_R(instruction ins, emitAttr attr, regNumber rs2, regNu
     id->idInsOpt(INS_OPTS_NONE);
     id->idAddr()->iiaLclVar.initLclVarAddr(varx, offs);
     id->idSetIsLclVar();
+
+    id->IDDEBUGINSTRSOURCE = 2;
 
     appendToCurIG(id);
 }
@@ -536,6 +540,8 @@ void emitter::emitIns_R_S(instruction ins, emitAttr attr, regNumber rd, int varx
     id->idInsOpt(INS_OPTS_NONE);
     id->idCodeSize(4);
 
+    id->IDDEBUGINSTRSOURCE = 3;
+
     appendToCurIG(id);
 }
 
@@ -585,6 +591,8 @@ void emitter::emitIns_I(instruction ins, emitAttr attr, ssize_t imm)
     id->idInsOpt(INS_OPTS_NONE);
     id->idCodeSize(4);
 
+    id->IDDEBUGINSTRSOURCE = 4;
+
     appendToCurIG(id);
 }
 
@@ -628,6 +636,8 @@ void emitter::emitIns_R_I(instruction ins, emitAttr attr, regNumber reg, ssize_t
     id->idReg1(reg);
     id->idCodeSize(4);
     id->idInsOpt(INS_OPTS_NONE);
+
+    id->IDDEBUGINSTRSOURCE = 5;
 
     appendToCurIG(id);
 }
@@ -774,6 +784,8 @@ void emitter::emitIns_R_R(
     id->idCodeSize(4);
 
     emitIns_R_R_SetFloatInstrAdditionalData(id, ins);
+
+    id->IDDEBUGINSTRSOURCE = 6;
 
     appendToCurIG(id);
 }
@@ -928,6 +940,8 @@ void emitter::emitIns_R_R_I(
     id->idReg2(reg2);
     id->idCodeSize(4);
 
+    id->IDDEBUGINSTRSOURCE = 7;
+
     appendToCurIG(id);
 }
 
@@ -967,6 +981,8 @@ void emitter::emitIns_R_I_I(
     id->idReg1(reg1);
     id->idReg2(static_cast<regNumber>(imm1));
     id->idCodeSize(4);
+
+    id->IDDEBUGINSTRSOURCE = 8;
 
     appendToCurIG(id);
 }
@@ -1121,6 +1137,8 @@ void emitter::emitIns_R_R_R(
             break;
     }
 
+    id->IDDEBUGINSTRSOURCE = 9;
+
     appendToCurIG(id);
 }
 
@@ -1200,6 +1218,8 @@ void emitter::emitIns_R_R_R_R(
     id->idRoundModifier(kDynamicRoundingMode);
     id->idCodeSize(4);
 
+    id->IDDEBUGINSTRSOURCE = 10;
+
     appendToCurIG(id);
 }
 
@@ -1251,6 +1271,8 @@ void emitter::emitIns_R_C(
 
     id->idAddr()->iiaFieldHnd = fldHnd;
 
+    id->IDDEBUGINSTRSOURCE = 11;
+
     appendToCurIG(id);
 }
 
@@ -1300,6 +1322,8 @@ void emitter::emitIns_R_AI(instruction ins,
 
     id->idAddr()->iiaAddr = (BYTE*)addr;
     id->idCodeSize(8);
+
+    id->IDDEBUGINSTRSOURCE = 12;
 
     appendToCurIG(id);
 }
@@ -1372,6 +1396,8 @@ void emitter::emitIns_R_L(instruction ins, emitAttr attr, BasicBlock* dst, regNu
     }
 #endif // DEBUG
 
+    id->IDDEBUGINSTRSOURCE = 13;
+
     appendToCurIG(id);
 }
 
@@ -1409,6 +1435,8 @@ void emitter::emitIns_J_R_I(instruction ins, emitAttr attr, BasicBlock* dst, reg
 #if EMITTER_STATS
     emitTotalIGjmps++;
 #endif
+
+    id->IDDEBUGINSTRSOURCE = 14;
 
     appendToCurIG(id);
 }
@@ -1472,6 +1500,8 @@ void emitter::emitIns_J(instruction ins, BasicBlock* dst, int instrCount)
     emitTotalIGjmps++;
 #endif
 
+    id->IDDEBUGINSTRSOURCE = 15;
+
     appendToCurIG(id);
 }
 
@@ -1525,6 +1555,8 @@ void emitter::emitIns_J_cond_la(instruction ins, BasicBlock* dst, regNumber reg1
 
     id->idCodeSize(4);
 
+    id->IDDEBUGINSTRSOURCE = 16;
+
     appendToCurIG(id);
 }
 
@@ -1535,6 +1567,8 @@ void emitter::emitIns_J_cond_la(instruction ins, BasicBlock* dst, regNumber reg1
  */
 void emitter::emitLoadImmediate(emitAttr size, regNumber reg, ssize_t imm)
 {
+    printf("Is emmiting load immediate now!!!!!!AAAAAAA - with imm %d\n", imm);
+
     // In the worst case a sequence of 8 instructions will be used:
     //   LUI + ADDIW + SLLI + ADDI + SLLI + ADDI + SLLI + ADDI
     //
@@ -1767,6 +1801,8 @@ void emitter::emitIns_Call(EmitCallType          callType,
         codeGen->getDisAssembler().disSetMethod((size_t)addr, methHnd);
     }
 #endif // LATE_DISASM
+
+    id->IDDEBUGINSTRSOURCE = 17;
 
     appendToCurIG(id);
 }
@@ -3788,6 +3824,16 @@ size_t emitter::emitOutputInstr(insGroup* ig, instrDesc* id, BYTE** dp)
             ins = INS_nop;
             break;
         case INS_OPTS_NONE:
+            // do this right?
+            printf("Current id address: %p\n", id);
+            printf("Reg1: %d\n", id->idReg1());
+            printf("Reg2: %d\n", id->idReg2());
+            printf("Reg3: %d\n", id->idReg3());
+            printf("Reg4: %d\n", id->idReg4());
+            printf("Cns: %d\n", emitGetInsSC(id));
+            assert(519933 != emitGetInsSC(id));
+            printf("Src: %d\n", id->IDDEBUGINSTRSOURCE);
+
             ins = id->idIns();
             dst = emitOutputInstr_OptsNone(dst, id, ins);
             sz  = sizeof(instrDesc);
