@@ -46,7 +46,7 @@ static constexpr size_t NBitMask(uint8_t bits)
 }
 
 template <uint8_t MaskSize>
-static ssize_t LowerNBitsOfWord(ssize_t word)
+static INT32 LowerNBitsOfWord(INT32 word)
 {
     static_assert(MaskSize < 32, "Given mask size is bigger than the word itself");
     static_assert(MaskSize > 0, "Given mask size cannot be zero");
@@ -57,37 +57,37 @@ static ssize_t LowerNBitsOfWord(ssize_t word)
 }
 
 template <uint8_t MaskSize>
-static ssize_t UpperNBitsOfWord(ssize_t word)
+static INT32 UpperNBitsOfWord(INT32 word)
 {
-    static constexpr size_t kShift = 32 - MaskSize;
+    static constexpr INT32 kShift = 32 - MaskSize;
 
     return LowerNBitsOfWord<MaskSize>(word >> kShift);
 }
 
 template <uint8_t RangeBegin, uint8_t MaskSize>
-static ssize_t MiddleNBitsOfWord(ssize_t word)
+static INT32 MiddleNBitsOfWord(INT32 word)
 {
     return LowerNBitsOfWord<MaskSize>(word >> RangeBegin);
 }
 
 template <uint8_t MaskSize>
-static ssize_t UpperNBitsOfWordSignExtend(ssize_t word)
+static INT32 UpperNBitsOfWordSignExtend(INT32 word)
 {
-    static constexpr unsigned kSignExtend = 1 << (31 - MaskSize);
+    static constexpr INT32 kSignExtend = 1 << (31 - MaskSize);
 
     return UpperNBitsOfWord<MaskSize>(word + kSignExtend);
 }
 
-static ssize_t UpperWordOfDoubleWord(ssize_t immediate)
+static INT32 UpperWordOfDoubleWord(INT32 immediate)
 {
     return immediate >> 32;
 }
 
-static ssize_t LowerWordOfDoubleWord(ssize_t immediate)
+static INT32 LowerWordOfDoubleWord(ssize_t immediate)
 {
     static constexpr size_t kWordMask = NBitMask(32);
 
-    return immediate & kWordMask;
+    return static_cast<INT32>(immediate & kWordMask);
 }
 
 template <uint8_t UpperMaskSize, uint8_t LowerMaskSize>
@@ -100,7 +100,7 @@ static ssize_t DoubleWordSignExtend(ssize_t doubleWord)
 }
 
 template <uint8_t UpperMaskSize>
-static ssize_t UpperWordOfDoubleWordSingleSignExtend(ssize_t doubleWord)
+static INT32 UpperWordOfDoubleWordSingleSignExtend(ssize_t doubleWord)
 {
     static constexpr size_t kUpperSignExtend = static_cast<size_t>(1) << (31 - UpperMaskSize);
 
@@ -108,7 +108,7 @@ static ssize_t UpperWordOfDoubleWordSingleSignExtend(ssize_t doubleWord)
 }
 
 template <uint8_t UpperMaskSize, uint8_t LowerMaskSize>
-static ssize_t UpperWordOfDoubleWordDoubleSignExtend(ssize_t doubleWord)
+static INT32 UpperWordOfDoubleWordDoubleSignExtend(ssize_t doubleWord)
 {
     return UpperWordOfDoubleWord(DoubleWordSignExtend<UpperMaskSize, LowerMaskSize>(doubleWord));
 }
