@@ -173,8 +173,9 @@ size_t emitter::emitSizeOfInsDsc(instrDesc* id) const
         case INS_OPTS_RC:
         case INS_OPTS_RL:
         case INS_OPTS_RELOC:
-        case INS_OPTS_NONE:
             return sizeof(instrDesc);
+        case INS_OPTS_NONE:
+            return id->idIsLargeCns() ? sizeof(instrDescCns) : sizeof(instrDesc);
         default:
             NO_WAY("unexpected instruction descriptor format");
             break;
@@ -3831,12 +3832,11 @@ size_t emitter::emitOutputInstr(insGroup* ig, instrDesc* id, BYTE** dp)
             printf("Reg3: %d\n", id->idReg3());
             printf("Reg4: %d\n", id->idReg4());
             printf("Cns: %d\n", emitGetInsSC(id));
-            assert(519933 != emitGetInsSC(id));
             printf("Src: %d\n", id->IDDEBUGINSTRSOURCE);
 
             ins = id->idIns();
             dst = emitOutputInstr_OptsNone(dst, id, ins);
-            sz  = sizeof(instrDesc);
+            sz = id->idIsLargeCns() ? sizeof(instrDescCns) : sizeof(instrDesc);
             break;
         default:
             NO_WAY("invalid insopts inside emitOutputInstr!");
@@ -3950,6 +3950,8 @@ size_t emitter::emitOutputInstr(insGroup* ig, instrDesc* id, BYTE** dp)
     assert(*dp != dst);
 
     *dp = dst;
+
+    printf("Emitted instruction size: %d\n");
 
     return sz;
 }
