@@ -937,6 +937,12 @@ void emitter::emitIns_R_R_I(
     instrDesc* id = emitNewInstrCns(attr, TrimSignedToImm12(imm));
 
     id->idIns(ins);
+
+    if (id->idInsIs(INS_sd, INS_sw, INS_sh, INS_sb, INS_fsd, INS_fsw)) {
+        // Store instructions have swapped rd and rs1
+        std::swap(reg1, reg2);
+    }
+
     id->idReg1(reg1);
     id->idReg2(reg2);
     id->idCodeSize(4);
@@ -1625,8 +1631,6 @@ void emitter::emitIns_J_cond_la(instruction ins, BasicBlock* dst, regNumber reg1
  */
 void emitter::emitLoadImmediate(emitAttr size, regNumber reg, ssize_t imm)
 {
-    printf("Is emmiting load immediate now!!!!!!AAAAAAA - with imm %d\n", imm);
-
     // In the worst case a sequence of 8 instructions will be used:
     //   LUI + ADDIW + SLLI + ADDI + SLLI + ADDI + SLLI + ADDI
     //
@@ -1653,7 +1657,6 @@ void emitter::emitLoadImmediate(emitAttr size, regNumber reg, ssize_t imm)
     // Since ADDIW use sign extension fo immediate
     // we have to adjust higher 19 bit loaded by LUI
     // for case when low part is bigger than 0x800.
-    UINT32 high19 = (high31 + 0x800) >> 12;
 
     emitIns_R_I(INS_lui, size, reg, UpperNBitsOfWordSignExtend<20>(high31));
     emitIns_R_R_I(INS_addiw, size, reg, reg, LowerNBitsOfWord<12>(high31));
