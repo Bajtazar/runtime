@@ -1097,6 +1097,7 @@ void emitter::emitIns_R_R_R(
 
     instrDesc* id = emitNewInstr(attr);
 
+    id->idIns(ins);
     id->idReg1(reg1);
     id->idReg2(reg2);
     id->idReg3(reg3);
