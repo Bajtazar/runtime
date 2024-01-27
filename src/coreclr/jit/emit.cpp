@@ -1523,14 +1523,6 @@ void emitter::dispIns(instrDesc* id)
 
 void emitter::appendToCurIG(instrDesc* id)
 {
-    printf("INSTRUCTION HAS BEEN EMITTED\n");
-    printf("--->INSTRUCTION GROUP ADDRESS (ACHTUNG): %p\n", id);
-    printf("--->Reg1: %d\n", id->idReg1());
-    printf("--->Reg2: %d\n", id->idReg2());
-    printf("--->Reg3: %d\n", id->idReg3());
-    printf("--->Reg4: %d\n", id->idReg4());
-    printf("--->Cns: %d\n", emitGetInsSC(id));
-    printf("--->Src: %d\n", id->IDDEBUGINSTRSOURCE);
 #ifdef TARGET_ARMARCH
     if (id->idIns() == INS_dmb)
     {
@@ -1553,10 +1545,10 @@ void emitter::appendToCurIG(instrDesc* id)
 void emitter::emitDispInsAddr(const BYTE* code)
 {
 #ifdef DEBUG
-    if (emitComp->opts.disAddr)
-    {
+    // if (emitComp->opts.disAddr)
+    // {
         printf(FMT_ADDR, DBG_ADDR(code));
-    }
+    // }
 #endif
 }
 
