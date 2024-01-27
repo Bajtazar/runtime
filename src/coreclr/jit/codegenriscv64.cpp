@@ -7240,13 +7240,13 @@ inline void CodeGen::genJumpToThrowHlpBlk_la(
             if (compiler->opts.compReloc)
             {
                 ssize_t imm = (3 + 1) << 2;
-                emit->emitIns_R_R_I(ins, EA_PTRSIZE, reg1, reg2, imm);
+                emit->emitIns_J_R_R(ins, EA_PTRSIZE, reg1, reg2, imm);
                 emit->emitIns_R_AI(INS_jal, EA_PTR_DSP_RELOC, callTarget, (ssize_t)pAddr);
             }
             else
             {
                 ssize_t imm = 9 << 2;
-                emit->emitIns_R_R_I(ins, EA_PTRSIZE, reg1, reg2, imm);
+                emit->emitIns_J_R_R(ins, EA_PTRSIZE, reg1, reg2, imm);
                 // TODO-RISCV64-CQ: In the future we may consider using emitter::emitLoadImmediate instead,
                 // which is less straightforward but offers slightly better codegen.
                 emitLoadConstAtAddr(GetEmitter(), callTarget, (ssize_t)pAddr);
@@ -7264,7 +7264,7 @@ inline void CodeGen::genJumpToThrowHlpBlk_la(
                 imm = 3 << 2;
             }
 
-            emit->emitIns_R_R_I(ins, EA_PTRSIZE, reg1, reg2, imm);
+            emit->emitIns_J_R_R(ins, EA_PTRSIZE, reg1, reg2, imm);
         }
 
         BasicBlock* skipLabel = genCreateTempLabel();
