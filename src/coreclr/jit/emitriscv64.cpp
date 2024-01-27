@@ -1589,7 +1589,7 @@ void emitter::emitLoadImmediate(emitAttr size, regNumber reg, ssize_t imm)
 
     // TODO-RISCV64: maybe optimized via emitDataConst(), check #86790
 
-    UINT32 msb = BitOperations::BitScanReverse((uint64_t)imm);
+    UINT32 msb    = BitOperations::BitScanReverse((uint64_t)imm);
     UINT32 high31 = LowerNBitsOfWord<31>(imm >> (msb > 30 ? msb - 30 : 0));
 
     // Since ADDIW use sign extension fo immediate
@@ -5014,6 +5014,24 @@ void emitter::emitDispInsHex(instrDesc* id, BYTE* code, size_t sz)
             printf("              ");
         }
     }
+}
+
+void emitter::emitDispInst(instruction ins)
+{
+    const char* insstr = codeGen->genInsName(ins);
+    size_t      len    = strlen(insstr);
+
+    /* Display the instruction name */
+
+    printf("%s", insstr);
+
+    // Add at least one space after the instruction name
+    // and add spaces until we have reach the normal size of 16
+    do
+    {
+        printf(" ");
+        ++len;
+    } while (len < 16);
 }
 
 void emitter::emitDispInsInstrNum(const instrDesc* id) const
