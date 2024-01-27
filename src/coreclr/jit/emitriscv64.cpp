@@ -938,7 +938,8 @@ void emitter::emitIns_R_R_I(
 
     id->idIns(ins);
 
-    if (id->idInsIs(INS_sd, INS_sw, INS_sh, INS_sb, INS_fsd, INS_fsw)) {
+    if (id->idInsIs(INS_sd, INS_sw, INS_sh, INS_sb, INS_fsd, INS_fsw))
+    {
         // Store instructions have swapped rd and rs1
         std::swap(reg1, reg2);
     }
@@ -1450,7 +1451,8 @@ void emitter::emitIns_J_R_I(instruction ins, emitAttr attr, BasicBlock* dst, reg
 }
 
 #ifdef DEBUG
-void emitter::emitIns_J_R_R_SanityCheck(instruction ins, regNumber rs1, regNumber rs2) {
+void emitter::emitIns_J_R_R_SanityCheck(instruction ins, regNumber rs1, regNumber rs2)
+{
     switch (ins)
     {
         case INS_beqz:
@@ -1473,7 +1475,8 @@ void emitter::emitIns_J_R_R_SanityCheck(instruction ins, regNumber rs1, regNumbe
 }
 #endif // DEBUG
 
-void emitter::emitIns_J_R_R(instruction ins, emitAttr attr, regNumber rs1, regNumber rs2, int instrCount) {
+void emitter::emitIns_J_R_R(instruction ins, emitAttr attr, regNumber rs1, regNumber rs2, int instrCount)
+{
 #ifdef DEBUG
     emitIns_J_R_R_SanityCheck(ins, rs1, rs2);
 #endif // DEBUG
@@ -3897,7 +3900,7 @@ size_t emitter::emitOutputInstr(insGroup* ig, instrDesc* id, BYTE** dp)
 
             ins = id->idIns();
             dst = emitOutputInstr_OptsNone(dst, id, ins);
-            sz = id->idIsLargeCns() ? sizeof(instrDescCns) : sizeof(instrDesc);
+            sz  = id->idIsLargeCns() ? sizeof(instrDescCns) : sizeof(instrDesc);
             break;
         default:
             NO_WAY("invalid insopts inside emitOutputInstr!");

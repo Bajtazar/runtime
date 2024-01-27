@@ -1547,8 +1547,8 @@ void emitter::emitDispInsAddr(const BYTE* code)
 #ifdef DEBUG
     // if (emitComp->opts.disAddr)
     // {
-        printf(FMT_ADDR, DBG_ADDR(code));
-    // }
+    printf(FMT_ADDR, DBG_ADDR(code));
+// }
 #endif
 }
 
