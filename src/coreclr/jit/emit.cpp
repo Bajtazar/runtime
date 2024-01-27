@@ -939,40 +939,7 @@ insGroup* emitter::emitSavIG(bool emitAdd)
     ig->igData = id;
     INDEBUG(ig->igDataSize = gs;)
 
-    // printf("Emitting old ins group instructions\n");
-    // size_t n;
-    // for (auto cpy = emitCurIGfreeBase + m_debugInfoSize; cpy < emitCurIGfreeBase + sz;) {
-    //     auto current = reinterpret_cast<instrDesc*>(cpy);
-
-    //     emitDispInst(current->idIns());
-    //     printf("\n");
-
-    //     // n = emitGetInstrDescSize(current);
-    //     printf("Predicted size with emitGetInstrDescSize: %d\n", emitGetInstrDescSize(current));
-    //     n = emitSizeOfInsDsc(current);
-    //     printf("Calculated size with emitSizeOfInsDsc: %d\n", emitGetInstrDescSize(current));
-    //     emitAdvanceInstrDesc(&current, n);
-    //     cpy = reinterpret_cast<BYTE*>(current);
-    // }
-    // printf("Emitting ins finished\n");
-
     memcpy(id, emitCurIGfreeBase, sz);
-
-    // printf("Emitting saved instructions\n");
-    // printf("EmitCurIGFreeBase Addr: %p\n", emitCurIGfreeBase);
-
-    // for (auto cpy = id + m_debugInfoSize; cpy < id + sz;) {
-    //     auto current = reinterpret_cast<instrDesc*>(cpy);
-
-    //     emitDispInst(current->idIns());
-    //     printf("\n");
-
-    //     n = emitSizeOfInsDsc(current);
-    //     emitAdvanceInstrDesc(&current, n);
-    //     cpy = reinterpret_cast<BYTE*>(current);
-    // }
-    // printf("Emitting ins finished\n");
-
 
 #ifdef DEBUG
     if (false && emitComp->verbose) // this is not useful in normal dumps (hence it is normally under if (false))

@@ -3759,6 +3759,7 @@ BYTE* emitter::emitOutputInstr_OptsNone(BYTE* dst, const instrDesc* id, instruct
         case INS_pause:
         case INS_ecall:
         case INS_ebreak:
+        case INS_nop:
             dst += emitOutput_Instr(dst, emitInsCode(ins));
             break;
         default:
@@ -3826,13 +3827,13 @@ size_t emitter::emitOutputInstr(insGroup* ig, instrDesc* id, BYTE** dp)
             break;
         case INS_OPTS_NONE:
             // do this right?
-            printf("Current id address: %p\n", id);
-            printf("Reg1: %d\n", id->idReg1());
-            printf("Reg2: %d\n", id->idReg2());
-            printf("Reg3: %d\n", id->idReg3());
-            printf("Reg4: %d\n", id->idReg4());
-            printf("Cns: %d\n", emitGetInsSC(id));
-            printf("Src: %d\n", id->IDDEBUGINSTRSOURCE);
+            // printf("Current id address: %p\n", id);
+            // printf("Reg1: %d\n", id->idReg1());
+            // printf("Reg2: %d\n", id->idReg2());
+            // printf("Reg3: %d\n", id->idReg3());
+            // printf("Reg4: %d\n", id->idReg4());
+            // printf("Cns: %d\n", emitGetInsSC(id));
+            // printf("Src: %d\n", id->IDDEBUGINSTRSOURCE);
 
             ins = id->idIns();
             dst = emitOutputInstr_OptsNone(dst, id, ins);
@@ -3950,8 +3951,6 @@ size_t emitter::emitOutputInstr(insGroup* ig, instrDesc* id, BYTE** dp)
     assert(*dp != dst);
 
     *dp = dst;
-
-    printf("Emitted instruction size: %d\n");
 
     return sz;
 }
