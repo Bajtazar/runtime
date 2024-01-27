@@ -1569,8 +1569,6 @@ void emitter::emitIns_J_cond_la(instruction ins, BasicBlock* dst, regNumber reg1
  */
 void emitter::emitLoadImmediate(emitAttr size, regNumber reg, ssize_t imm)
 {
-    printf("Is emmiting load immediate now!!!!!!AAAAAAA - with imm %d\n", imm);
-
     // In the worst case a sequence of 8 instructions will be used:
     //   LUI + ADDIW + SLLI + ADDI + SLLI + ADDI + SLLI + ADDI
     //
@@ -1597,7 +1595,6 @@ void emitter::emitLoadImmediate(emitAttr size, regNumber reg, ssize_t imm)
     // Since ADDIW use sign extension fo immediate
     // we have to adjust higher 19 bit loaded by LUI
     // for case when low part is bigger than 0x800.
-    UINT32 high19 = (high31 + 0x800) >> 12;
 
     emitIns_R_I(INS_lui, size, reg, UpperNBitsOfWordSignExtend<20>(high31));
     emitIns_R_R_I(INS_addiw, size, reg, reg, LowerNBitsOfWord<12>(high31));
@@ -3834,7 +3831,7 @@ size_t emitter::emitOutputInstr(insGroup* ig, instrDesc* id, BYTE** dp)
             // printf("Reg3: %d\n", id->idReg3());
             // printf("Reg4: %d\n", id->idReg4());
             // printf("Cns: %d\n", emitGetInsSC(id));
-            // printf("Src: %d\n", id->IDDEBUGINSTRSOURCE);
+            printf("Src: %d\n", id->IDDEBUGINSTRSOURCE);
 
             ins = id->idIns();
             dst = emitOutputInstr_OptsNone(dst, id, ins);

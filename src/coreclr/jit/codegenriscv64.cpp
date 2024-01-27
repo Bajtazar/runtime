@@ -554,10 +554,10 @@ void CodeGen::genFuncletProlog(BasicBlock* block)
         assert(genFuncletInfo.fiSP_to_FPRA_save_delta < 2040);
         genStackPointerAdjustment(frameSize, rsGetRsvdReg(), nullptr, /* reportUnwindData */ true);
 
-        GetEmitter()->emitIns_R_R_I(INS_sd, EA_PTRSIZE, REG_FP, REG_SPBASE, genFuncletInfo.fiSP_to_FPRA_save_delta);
+        GetEmitter()->emitIns_R_R_I(INS_sd, EA_PTRSIZE, REG_SPBASE, REG_FP, genFuncletInfo.fiSP_to_FPRA_save_delta);
         compiler->unwindSaveReg(REG_FP, genFuncletInfo.fiSP_to_FPRA_save_delta);
 
-        GetEmitter()->emitIns_R_R_I(INS_sd, EA_PTRSIZE, REG_RA, REG_SPBASE, genFuncletInfo.fiSP_to_FPRA_save_delta + 8);
+        GetEmitter()->emitIns_R_R_I(INS_sd, EA_PTRSIZE, REG_SPBASE, REG_RA, genFuncletInfo.fiSP_to_FPRA_save_delta + 8);
         compiler->unwindSaveReg(REG_RA, genFuncletInfo.fiSP_to_FPRA_save_delta + 8);
 
         maskSaveRegsInt &= ~(RBM_RA | RBM_FP); // We've saved these now
@@ -576,10 +576,10 @@ void CodeGen::genFuncletProlog(BasicBlock* block)
 
         genStackPointerAdjustment(-spDelta, rsGetRsvdReg(), nullptr, /* reportUnwindData */ true);
 
-        GetEmitter()->emitIns_R_R_I(INS_sd, EA_PTRSIZE, REG_FP, REG_SPBASE, offset);
+        GetEmitter()->emitIns_R_R_I(INS_sd, EA_PTRSIZE, REG_SPBASE, REG_FP, offset);
         compiler->unwindSaveReg(REG_FP, offset);
 
-        GetEmitter()->emitIns_R_R_I(INS_sd, EA_PTRSIZE, REG_RA, REG_SPBASE, offset + 8);
+        GetEmitter()->emitIns_R_R_I(INS_sd, EA_PTRSIZE, REG_SPBASE, REG_RA, offset + 8);
         compiler->unwindSaveReg(REG_RA, offset + 8);
 
         maskSaveRegsInt &= ~(RBM_RA | RBM_FP); // We've saved these now
@@ -1059,7 +1059,7 @@ void CodeGen::genZeroInitFrameUsingBlockInit(int untrLclHi, int untrLclLo, regNu
     if (padding)
     {
         assert(padding == 4);
-        GetEmitter()->emitIns_R_R_I(INS_sw, EA_4BYTE, REG_R0, rAddr, 0);
+        GetEmitter()->emitIns_R_R_I(INS_sw, EA_4BYTE, rAddr, REG_R0, 0);
         uCntBytes -= 4;
     }
 
@@ -1086,8 +1086,8 @@ void CodeGen::genZeroInitFrameUsingBlockInit(int untrLclHi, int untrLclLo, regNu
         instGen_Set_Reg_To_Imm(EA_PTRSIZE, rCnt, (ssize_t)uCntSlots / 2);
 
         // TODO-RISCV64: maybe optimize further
-        GetEmitter()->emitIns_R_R_I(INS_sd, EA_PTRSIZE, REG_R0, rAddr, 8 + padding);
-        GetEmitter()->emitIns_R_R_I(INS_sd, EA_PTRSIZE, REG_R0, rAddr, 0 + padding);
+        GetEmitter()->emitIns_R_R_I(INS_sd, EA_PTRSIZE, rAddr, REG_R0, 8 + padding);
+        GetEmitter()->emitIns_R_R_I(INS_sd, EA_PTRSIZE, rAddr, REG_R0, 0 + padding);
         GetEmitter()->emitIns_R_R_I(INS_addi, EA_PTRSIZE, rCnt, rCnt, -1);
 
         // bne rCnt, zero, -4 * 4
@@ -1101,8 +1101,8 @@ void CodeGen::genZeroInitFrameUsingBlockInit(int untrLclHi, int untrLclLo, regNu
     {
         while (uCntBytes >= REGSIZE_BYTES * 2)
         {
-            GetEmitter()->emitIns_R_R_I(INS_sd, EA_PTRSIZE, REG_R0, rAddr, 8 + padding);
-            GetEmitter()->emitIns_R_R_I(INS_sd, EA_PTRSIZE, REG_R0, rAddr, 0 + padding);
+            GetEmitter()->emitIns_R_R_I(INS_sd, EA_PTRSIZE, rAddr, REG_R0, 8 + padding);
+            GetEmitter()->emitIns_R_R_I(INS_sd, EA_PTRSIZE, rAddr, REG_R0, 0 + padding);
             GetEmitter()->emitIns_R_R_I(INS_addi, EA_PTRSIZE, rAddr, rAddr, 2 * REGSIZE_BYTES + padding);
             uCntBytes -= REGSIZE_BYTES * 2;
             padding = 0;
@@ -1113,11 +1113,11 @@ void CodeGen::genZeroInitFrameUsingBlockInit(int untrLclHi, int untrLclLo, regNu
     {
         if ((uCntBytes - REGSIZE_BYTES) == 0)
         {
-            GetEmitter()->emitIns_R_R_I(INS_sd, EA_PTRSIZE, REG_R0, rAddr, padding);
+            GetEmitter()->emitIns_R_R_I(INS_sd, EA_PTRSIZE, rAddr, REG_R0, padding);
         }
         else
         {
-            GetEmitter()->emitIns_R_R_I(INS_sd, EA_PTRSIZE, REG_R0, rAddr, padding);
+            GetEmitter()->emitIns_R_R_I(INS_sd, EA_PTRSIZE, rAddr, REG_R0, padding);
             GetEmitter()->emitIns_R_R_I(INS_addi, EA_PTRSIZE, rAddr, rAddr, REGSIZE_BYTES);
         }
         uCntBytes -= REGSIZE_BYTES;
@@ -1125,7 +1125,7 @@ void CodeGen::genZeroInitFrameUsingBlockInit(int untrLclHi, int untrLclLo, regNu
     if (uCntBytes > 0)
     {
         assert(uCntBytes == sizeof(int));
-        GetEmitter()->emitIns_R_R_I(INS_sw, EA_4BYTE, REG_R0, rAddr, padding);
+        GetEmitter()->emitIns_R_R_I(INS_sw, EA_4BYTE, rAddr, REG_R0, padding);
         uCntBytes -= sizeof(int);
     }
     noway_assert(uCntBytes == 0);
@@ -1781,9 +1781,9 @@ void CodeGen::genLclHeap(GenTree* tree)
                 while (stpCount != 0)
                 {
                     imm -= 8;
-                    emit->emitIns_R_R_I(INS_sd, EA_PTRSIZE, REG_R0, REG_SPBASE, imm);
+                    emit->emitIns_R_R_I(INS_sd, EA_PTRSIZE, REG_SPBASE, REG_R0, imm);
                     imm -= 8;
-                    emit->emitIns_R_R_I(INS_sd, EA_PTRSIZE, REG_R0, REG_SPBASE, imm);
+                    emit->emitIns_R_R_I(INS_sd, EA_PTRSIZE, REG_SPBASE, REG_R0, imm);
                     stpCount -= 1;
                 }
 
@@ -1846,8 +1846,8 @@ void CodeGen::genLclHeap(GenTree* tree)
         ssize_t imm = -16;
         emit->emitIns_R_R_I(INS_addi, EA_PTRSIZE, REG_SPBASE, REG_SPBASE, imm);
 
-        emit->emitIns_R_R_I(INS_sd, EA_PTRSIZE, REG_R0, REG_SPBASE, 8);
-        emit->emitIns_R_R_I(INS_sd, EA_PTRSIZE, REG_R0, REG_SPBASE, 0);
+        emit->emitIns_R_R_I(INS_sd, EA_PTRSIZE, REG_SPBASE, REG_R0, 8);
+        emit->emitIns_R_R_I(INS_sd, EA_PTRSIZE, REG_SPBASE, REG_R0, 0);
 
         // If not done, loop
         // Note that regCnt is the number of bytes to stack allocate.
@@ -2257,8 +2257,8 @@ void CodeGen::genCodeForInitBlkUnroll(GenTreeBlk* node)
         }
         else
         {
-            emit->emitIns_R_R_I(INS_sd, EA_8BYTE, srcReg, dstAddrBaseReg, dstOffset);
-            emit->emitIns_R_R_I(INS_sd, EA_8BYTE, srcReg, dstAddrBaseReg, dstOffset + 8);
+            emit->emitIns_R_R_I(INS_sd, EA_8BYTE, dstAddrBaseReg, srcReg, dstOffset);
+            emit->emitIns_R_R_I(INS_sd, EA_8BYTE, dstAddrBaseReg, srcReg, dstOffset + 8);
         }
     }
 
@@ -2391,8 +2391,8 @@ void CodeGen::genCodeForCpObj(GenTreeBlk* cpObjNode)
             emit->emitIns_R_R_I(INS_ld, attr1, tmpReg2, REG_WRITE_BARRIER_SRC_BYREF, TARGET_POINTER_SIZE);
             emit->emitIns_R_R_I(INS_addi, attrSrcAddr, REG_WRITE_BARRIER_SRC_BYREF, REG_WRITE_BARRIER_SRC_BYREF,
                                 2 * TARGET_POINTER_SIZE);
-            emit->emitIns_R_R_I(INS_sd, attr0, tmpReg, REG_WRITE_BARRIER_DST_BYREF, 0);
-            emit->emitIns_R_R_I(INS_sd, attr1, tmpReg2, REG_WRITE_BARRIER_DST_BYREF, TARGET_POINTER_SIZE);
+            emit->emitIns_R_R_I(INS_sd, attr0, REG_WRITE_BARRIER_DST_BYREF, tmpReg, 0);
+            emit->emitIns_R_R_I(INS_sd, attr1, REG_WRITE_BARRIER_DST_BYREF, tmpReg2, TARGET_POINTER_SIZE);
             emit->emitIns_R_R_I(INS_addi, attrDstAddr, REG_WRITE_BARRIER_DST_BYREF, REG_WRITE_BARRIER_DST_BYREF,
                                 2 * TARGET_POINTER_SIZE);
             i += 2;
@@ -2411,7 +2411,7 @@ void CodeGen::genCodeForCpObj(GenTreeBlk* cpObjNode)
             emit->emitIns_R_R_I(INS_ld, attr0, tmpReg, REG_WRITE_BARRIER_SRC_BYREF, 0);
             emit->emitIns_R_R_I(INS_addi, attrSrcAddr, REG_WRITE_BARRIER_SRC_BYREF, REG_WRITE_BARRIER_SRC_BYREF,
                                 TARGET_POINTER_SIZE);
-            emit->emitIns_R_R_I(INS_sd, attr0, tmpReg, REG_WRITE_BARRIER_DST_BYREF, 0);
+            emit->emitIns_R_R_I(INS_sd, attr0, REG_WRITE_BARRIER_DST_BYREF, tmpReg, 0);
             emit->emitIns_R_R_I(INS_addi, attrDstAddr, REG_WRITE_BARRIER_DST_BYREF, REG_WRITE_BARRIER_DST_BYREF,
                                 TARGET_POINTER_SIZE);
         }
@@ -2437,8 +2437,8 @@ void CodeGen::genCodeForCpObj(GenTreeBlk* cpObjNode)
                     emit->emitIns_R_R_I(INS_ld, EA_8BYTE, tmpReg2, REG_WRITE_BARRIER_SRC_BYREF, TARGET_POINTER_SIZE);
                     emit->emitIns_R_R_I(INS_addi, attrSrcAddr, REG_WRITE_BARRIER_SRC_BYREF, REG_WRITE_BARRIER_SRC_BYREF,
                                         2 * TARGET_POINTER_SIZE);
-                    emit->emitIns_R_R_I(INS_sd, EA_8BYTE, tmpReg, REG_WRITE_BARRIER_DST_BYREF, 0);
-                    emit->emitIns_R_R_I(INS_sd, EA_8BYTE, tmpReg2, REG_WRITE_BARRIER_DST_BYREF, TARGET_POINTER_SIZE);
+                    emit->emitIns_R_R_I(INS_sd, EA_8BYTE, REG_WRITE_BARRIER_DST_BYREF, tmpReg, 0);
+                    emit->emitIns_R_R_I(INS_sd, EA_8BYTE, REG_WRITE_BARRIER_DST_BYREF, tmpReg2, TARGET_POINTER_SIZE);
                     emit->emitIns_R_R_I(INS_addi, attrDstAddr, REG_WRITE_BARRIER_DST_BYREF, REG_WRITE_BARRIER_DST_BYREF,
                                         2 * TARGET_POINTER_SIZE);
                     ++i; // extra increment of i, since we are copying two items
@@ -2453,7 +2453,7 @@ void CodeGen::genCodeForCpObj(GenTreeBlk* cpObjNode)
                     emit->emitIns_R_R_I(INS_ld, EA_8BYTE, tmpReg, REG_WRITE_BARRIER_SRC_BYREF, 0);
                     emit->emitIns_R_R_I(INS_addi, attrSrcAddr, REG_WRITE_BARRIER_SRC_BYREF, REG_WRITE_BARRIER_SRC_BYREF,
                                         TARGET_POINTER_SIZE);
-                    emit->emitIns_R_R_I(INS_sd, EA_8BYTE, tmpReg, REG_WRITE_BARRIER_DST_BYREF, 0);
+                    emit->emitIns_R_R_I(INS_sd, EA_8BYTE, REG_WRITE_BARRIER_DST_BYREF, tmpReg, 0);
                     emit->emitIns_R_R_I(INS_addi, attrDstAddr, REG_WRITE_BARRIER_DST_BYREF, REG_WRITE_BARRIER_DST_BYREF,
                                         TARGET_POINTER_SIZE);
                 }
@@ -5965,8 +5965,8 @@ void CodeGen::genCodeForCpBlkUnroll(GenTreeBlk* cpBlkNode)
             }
             else
             {
-                emit->emitIns_R_R_I(INS_sd, EA_8BYTE, tempReg, dstAddrBaseReg, dstOffset);
-                emit->emitIns_R_R_I(INS_sd, EA_8BYTE, tempReg2, dstAddrBaseReg, dstOffset + 8);
+                emit->emitIns_R_R_I(INS_sd, EA_8BYTE, dstAddrBaseReg, tempReg, dstOffset);
+                emit->emitIns_R_R_I(INS_sd, EA_8BYTE, dstAddrBaseReg, tempReg2, dstOffset + 8);
             }
         }
     }
@@ -6061,7 +6061,7 @@ void CodeGen::genCodeForInitBlkLoop(GenTreeBlk* initBlkNode)
     // Although, we zero the first pointer before the loop (the loop doesn't zero it)
     // it works as a nullcheck, otherwise the first iteration would try to access
     // "null + potentially large offset" and hit AV.
-    GetEmitter()->emitIns_R_R_I(INS_sd, EA_PTRSIZE, REG_R0, dstReg, 0);
+    GetEmitter()->emitIns_R_R_I(INS_sd, EA_PTRSIZE, dstReg, REG_R0, 0);
     if (size > TARGET_POINTER_SIZE)
     {
         // Extend liveness of dstReg in case if it gets killed by the store.
@@ -6078,7 +6078,7 @@ void CodeGen::genCodeForInitBlkLoop(GenTreeBlk* initBlkNode)
         GetEmitter()->emitDisableGC(); // TODO: add gcinfo to tempReg and remove nogc
 
         // *tempReg = 0
-        GetEmitter()->emitIns_R_R_I(INS_sd, EA_PTRSIZE, REG_R0, tempReg, 0);
+        GetEmitter()->emitIns_R_R_I(INS_sd, EA_PTRSIZE, tempReg, REG_R0, 0);
         // tempReg = tempReg - 8
         GetEmitter()->emitIns_R_R_I(INS_addi, EA_PTRSIZE, tempReg, tempReg, -8);
         // if (tempReg != dstReg) goto loop;
@@ -7439,10 +7439,10 @@ void CodeGen::genPushCalleeSavedRegisters(regNumber initReg, bool* pInitRegZeroe
 
             offsetSpToSavedFp = compiler->lvaOutgoingArgSpaceSize;
 
-            GetEmitter()->emitIns_R_R_I(INS_sd, EA_PTRSIZE, REG_FP, REG_SPBASE, offsetSpToSavedFp);
+            GetEmitter()->emitIns_R_R_I(INS_sd, EA_PTRSIZE, REG_SPBASE, REG_FP, offsetSpToSavedFp);
             compiler->unwindSaveReg(REG_FP, offsetSpToSavedFp);
 
-            GetEmitter()->emitIns_R_R_I(INS_sd, EA_PTRSIZE, REG_RA, REG_SPBASE, offsetSpToSavedFp + 8);
+            GetEmitter()->emitIns_R_R_I(INS_sd, EA_PTRSIZE, REG_SPBASE, REG_RA, offsetSpToSavedFp + 8);
             compiler->unwindSaveReg(REG_RA, offsetSpToSavedFp + 8);
 
             maskSaveRegsInt &= ~(RBM_FP | RBM_RA); // We've already saved FP/RA
@@ -7512,10 +7512,10 @@ void CodeGen::genPushCalleeSavedRegisters(regNumber initReg, bool* pInitRegZeroe
 
             offsetSpToSavedFp = offset;
 
-            GetEmitter()->emitIns_R_R_I(INS_sd, EA_PTRSIZE, REG_FP, REG_SPBASE, offset);
+            GetEmitter()->emitIns_R_R_I(INS_sd, EA_PTRSIZE, REG_SPBASE, REG_FP, offset);
             compiler->unwindSaveReg(REG_FP, offset);
 
-            GetEmitter()->emitIns_R_R_I(INS_sd, EA_PTRSIZE, REG_RA, REG_SPBASE, offset + 8);
+            GetEmitter()->emitIns_R_R_I(INS_sd, EA_PTRSIZE, REG_SPBASE, REG_RA, offset + 8);
             compiler->unwindSaveReg(REG_RA, offset + 8);
 
             genEstablishFramePointer(offset, /* reportUnwindData */ true);
@@ -7530,10 +7530,10 @@ void CodeGen::genPushCalleeSavedRegisters(regNumber initReg, bool* pInitRegZeroe
 
             offset = compiler->lvaOutgoingArgSpaceSize;
 
-            GetEmitter()->emitIns_R_R_I(INS_sd, EA_PTRSIZE, REG_FP, REG_SPBASE, offset);
+            GetEmitter()->emitIns_R_R_I(INS_sd, EA_PTRSIZE, REG_SPBASE, REG_FP, offset);
             compiler->unwindSaveReg(REG_FP, offset);
 
-            GetEmitter()->emitIns_R_R_I(INS_sd, EA_PTRSIZE, REG_RA, REG_SPBASE, offset + 8);
+            GetEmitter()->emitIns_R_R_I(INS_sd, EA_PTRSIZE, REG_SPBASE, REG_RA, offset + 8);
             compiler->unwindSaveReg(REG_RA, offset + 8);
 
             genEstablishFramePointer(offset, /* reportUnwindData */ true);
