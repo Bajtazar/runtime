@@ -1092,7 +1092,7 @@ void CodeGen::genZeroInitFrameUsingBlockInit(int untrLclHi, int untrLclLo, regNu
 
         // bne rCnt, zero, pc - (4 instructions)
         GetEmitter()->emitIns_R_R_I(INS_addi, EA_PTRSIZE, rAddr, rAddr, 2 * REGSIZE_BYTES);
-        GetEmitteR()->emitIns_J_R_R(INS_bne, EA_PTRSIZE, rCnt, REG_R0, -4);
+        GetEmitter()->emitIns_J_R_R(INS_bne, EA_PTRSIZE, rCnt, REG_R0, -4);
 
         uCntBytes %= REGSIZE_BYTES * 2;
     }

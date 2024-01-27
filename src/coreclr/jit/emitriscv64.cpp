@@ -1444,7 +1444,7 @@ void emitter::emitIns_J_R_I(instruction ins, emitAttr attr, BasicBlock* dst, reg
 }
 
 #ifdef DEBUG
-void emitter::emitIns_J_R_R_SanityCheck(instrucion ins, regNumber rs1m regNumber rs2) {
+void emitter::emitIns_J_R_R_SanityCheck(instruction ins, regNumber rs1, regNumber rs2) {
     switch (ins)
     {
         case INS_beqz:
@@ -3673,7 +3673,7 @@ BYTE* emitter::emitOutputInstr_OptsNone(BYTE* dst, const instrDesc* id, instruct
         case INS_jalr:
             dst += emitOutput_ITypeInstr(dst, ins, id->idReg1(), id->idReg2(), emitGetInsSC(id));
             break;
-        // R-Type instrucions
+        // R-Type instructions
         case INS_add:
         case INS_sub:
         case INS_sll:
