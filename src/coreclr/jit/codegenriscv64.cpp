@@ -1090,10 +1090,9 @@ void CodeGen::genZeroInitFrameUsingBlockInit(int untrLclHi, int untrLclLo, regNu
         GetEmitter()->emitIns_R_R_I(INS_sd, EA_PTRSIZE, rAddr, REG_R0, 0 + padding);
         GetEmitter()->emitIns_R_R_I(INS_addi, EA_PTRSIZE, rCnt, rCnt, -1);
 
-        // bne rCnt, zero, -4 * 4
-        ssize_t imm = -16;
+        // bne rCnt, zero, pc - (4 instructions)
         GetEmitter()->emitIns_R_R_I(INS_addi, EA_PTRSIZE, rAddr, rAddr, 2 * REGSIZE_BYTES);
-        GetEmitter()->emitIns_R_R_I(INS_bne, EA_PTRSIZE, rCnt, REG_R0, imm);
+        GetEmitteR()->emitIns_J_R_R(INS_bne, EA_PTRSIZE, rCnt, REG_R0, -4);
 
         uCntBytes %= REGSIZE_BYTES * 2;
     }

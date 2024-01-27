@@ -1443,6 +1443,62 @@ void emitter::emitIns_J_R_I(instruction ins, emitAttr attr, BasicBlock* dst, reg
     appendToCurIG(id);
 }
 
+#ifdef DEBUG
+void emitter::emitIns_J_R_R_SanityCheck(instrucion ins, regNumber rs1m regNumber rs2) {
+    switch (ins)
+    {
+        case INS_beqz:
+        case INS_bnez:
+            assert((rs1 == REG_ZERO) || (rs2 == REG_ZERO));
+            FALLTHROUGH;
+        case INS_beq:
+        case INS_bne:
+        case INS_blt:
+        case INS_bge:
+        case INS_bltu:
+        case INS_bgeu:
+            assert(isGeneralRegisterOrR0(rs1));
+            assert(isGeneralRegisterOrR0(rs2));
+            break;
+        default:
+            NO_WAY("Illegal ins within emitIns_J_R_R!");
+            break;
+    }
+}
+#endif // DEBUG
+
+void emitter::emitIns_J_R_R(instruction ins, emitAttr attr, regNumber rs1, regNumber rs2, int instrCount) {
+#ifdef DEBUG
+    emitIns_J_R_R_SanityCheck(ins, rs1, rs2);
+#endif // DEBUG
+    assert(instrCount != 0);
+
+    instrDescJmp* id = emitNewInstrJmp();
+
+    id->idIns(ins);
+    id->idAddr()->iiaSetInstrCount(instrCount);
+    id->idjKeepLong = false;
+    id->idjShort    = true;
+    id->idSetIsBound();
+    id->idjIG   = emitCurIG;
+    id->idjOffs = emitCurIGsize;
+    id->idInsOpt(INS_OPTS_J_cond);
+    id->idCodeSize(4);
+
+    /* Append this jump to this IG's jump list */
+
+    id->idjNext      = emitCurIGjmpList;
+    emitCurIGjmpList = id;
+
+#if EMITTER_STATS
+    emitTotalIGjmps++;
+#endif
+
+    id->IDDEBUGINSTRSOURCE = 18;
+
+    appendToCurIG(id);
+}
+
 void emitter::emitIns_J(instruction ins, BasicBlock* dst, int instrCount)
 {
     assert((INS_jal <= ins) && (ins <= INS_bgeu)); // Change with sanity check

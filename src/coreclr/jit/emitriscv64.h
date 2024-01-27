@@ -67,6 +67,7 @@ void emitIns_R_R_I_SanityCheck(instruction ins, regNumber reg1, regNumber reg2, 
 void emitIns_R_I_I_SanityCheck(instruction ins, regNumber rd, ssize_t imm1, ssize_t imm2);
 void emitIns_R_R_R_SanityCheck(instruction ins, regNumber rd, regNumber reg1, regNumber reg2);
 void emitIns_R_R_R_R_SanityCheck(instruction ins, regNumber rd, regNumber reg1, regNumber reg2, regNumber reg3);
+void emitIns_J_R_R_SanityCheck(instrucion ins, regNumber rs1m regNumber rs2);
 #endif // DEBUG
 
 void emitIns_S_R_R_GetRs1AndImm(int varx, int offs, regNumber tmpReg, regNumber* rs1, ssize_t* imm);
@@ -339,6 +340,8 @@ void emitIns_R_L(instruction ins, emitAttr attr, BasicBlock* dst, regNumber reg)
 void emitIns_J_R(instruction ins, emitAttr attr, BasicBlock* dst, regNumber reg);
 
 void emitIns_J_R_I(instruction ins, emitAttr attr, BasicBlock* dst, regNumber reg, int imm);
+
+void emitIns_J_R_R(instruction ins, emitAttr attr, regNumber rs1, regNumber rs2, int instrCount);
 
 void emitIns_R_AR(instruction ins, emitAttr attr, regNumber ireg, regNumber reg, int offs);
 
