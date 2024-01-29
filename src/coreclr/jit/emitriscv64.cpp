@@ -1489,6 +1489,8 @@ void emitter::emitIns_J_R_R(
     id->idReg2(rs2);
     id->idInsOpt(INS_OPTS_J_cond);
     id->idCodeSize(4);
+    id->idjIG                = emitCurIG;
+    id->idjOffs              = emitCurIGsize;
 
     if (dst != nullptr)
     {
@@ -1504,9 +1506,6 @@ void emitter::emitIns_J_R_R(
 #endif // DEBUG
 
         id->idAddr()->iiaBBlabel = dst;
-        id->idjIG                = emitCurIG;
-        id->idjOffs              = emitCurIGsize;
-
         if (emitComp->opts.compReloc)
         {
             id->idSetIsDspReloc();
