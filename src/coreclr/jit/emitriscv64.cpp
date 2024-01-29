@@ -889,6 +889,7 @@ void emitter::emitIns_R_R_I_SanityCheck(instruction ins, regNumber reg1, regNumb
             assert((immediate >= 0) && (immediate <= 63));
             FALLTHROUGH;
         case INS_addi:
+        case INS_andi:
         case INS_mov:
         case INS_slti:
         case INS_sltiu:
