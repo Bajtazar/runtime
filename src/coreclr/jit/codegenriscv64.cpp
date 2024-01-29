@@ -1092,7 +1092,7 @@ void CodeGen::genZeroInitFrameUsingBlockInit(int untrLclHi, int untrLclLo, regNu
 
         // bne rCnt, zero, pc - (4 instructions)
         GetEmitter()->emitIns_R_R_I(INS_addi, EA_PTRSIZE, rAddr, rAddr, 2 * REGSIZE_BYTES);
-        GetEmitter()->emitIns_J_R_R(INS_bne, EA_PTRSIZE, rCnt, REG_R0, -4);
+        GetEmitter()->emitIns_J_R_R(INS_bne, EA_PTRSIZE, nullptr, rCnt, REG_R0, -4);
 
         uCntBytes %= REGSIZE_BYTES * 2;
     }
@@ -7241,12 +7241,12 @@ inline void CodeGen::genJumpToThrowHlpBlk_la(
             callTarget = REG_DEFAULT_HELPER_CALL_TARGET;
             if (compiler->opts.compReloc)
             {
-                emit->emitIns_J_R_R(ins, EA_PTRSIZE, skipLabel, reg1, reg2 /*, 3 + 1*/);
+                emit->emitIns_J_R_R(ins, EA_PTRSIZE, skipLabel, reg1, reg2);
                 emit->emitIns_R_AI(INS_jal, EA_PTR_DSP_RELOC, callTarget, (ssize_t)pAddr);
             }
             else
             {
-                emit->emitIns_J_R_R(ins, EA_PTRSIZE, skipLabel, reg1, reg2/*, 9*/);
+                emit->emitIns_J_R_R(ins, EA_PTRSIZE, skipLabel, reg1, reg2);
                 // TODO-RISCV64-CQ: In the future we may consider using emitter::emitLoadImmediate instead,
                 // which is less straightforward but offers slightly better codegen.
                 emitLoadConstAtAddr(GetEmitter(), callTarget, (ssize_t)pAddr);
@@ -7258,7 +7258,7 @@ inline void CodeGen::genJumpToThrowHlpBlk_la(
             callType   = emitter::EC_FUNC_TOKEN;
             callTarget = REG_NA;
 
-            emit->emitIns_J_R_R(ins, EA_PTRSIZE, skipLabel, reg1, reg2 /*, compiler->opts.compReloc ? 3 : 9*/);
+            emit->emitIns_J_R_R(ins, EA_PTRSIZE, skipLabel, reg1, reg2);
         }
 
         emit->emitIns_Call(callType, compiler->eeFindHelper(compiler->acdHelper(codeKind)),
