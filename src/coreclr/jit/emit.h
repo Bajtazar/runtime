@@ -3562,13 +3562,11 @@ inline emitter::instrDesc* emitter::emitNewInstrSmall(emitAttr attr)
 inline emitter::instrDesc* emitter::emitNewInstr(emitAttr attr)
 {
     // This is larger than the Small Descr
-    printf("Allocating ID descriptor of size %d\n", sizeof(instrDesc));
     return emitAllocInstr(attr);
 }
 
 inline emitter::instrDescJmp* emitter::emitNewInstrJmp()
 {
-    printf("Allocating ID descriptor of size %d\n", sizeof(instrDescJmp));
     return emitAllocInstrJmp();
 }
 
@@ -3589,7 +3587,6 @@ inline emitter::instrDescAlign* emitter::emitNewInstrAlign()
 #if !defined(TARGET_ARM64)
 inline emitter::instrDescLbl* emitter::emitNewInstrLbl()
 {
-    printf("Allocating ID descriptor of size %d\n", sizeof(instrDescLbl));
     return emitAllocInstrLbl();
 }
 #else
@@ -3602,7 +3599,6 @@ inline emitter::instrDesc* emitter::emitNewInstrLclVarPair(emitAttr attr, cnsval
 
     if (instrDesc::fitsInSmallCns(cns))
     {
-        printf("Allocating ID descriptor of size %d\n", sizeof(instrDescLclVarPair));
         instrDescLclVarPair* id = emitAllocInstrLclVarPair(attr);
         id->idSmallCns(cns);
 
@@ -3614,7 +3610,6 @@ inline emitter::instrDesc* emitter::emitNewInstrLclVarPair(emitAttr attr, cnsval
     }
     else
     {
-        printf("Allocating ID descriptor of size %d\n", sizeof(instrDescLclVarPairCns));
         instrDescLclVarPairCns* id = emitAllocInstrLclVarPairCns(attr, cns);
 
 #if EMITTER_STATS
@@ -3630,7 +3625,6 @@ inline emitter::instrDesc* emitter::emitNewInstrDsp(emitAttr attr, target_ssize_
 {
     if (dsp == 0)
     {
-        printf("Allocating ID descriptor of size %d\n", sizeof(instrDesc));
         instrDesc* id = emitAllocInstr(attr);
 
 #if EMITTER_STATS
@@ -3641,7 +3635,6 @@ inline emitter::instrDesc* emitter::emitNewInstrDsp(emitAttr attr, target_ssize_
     }
     else
     {
-        printf("Allocating ID descriptor of size %d\n", sizeof(instrDescDsp));
         instrDescDsp* id = emitAllocInstrDsp(attr);
 
         id->idSetIsLargeDsp();
@@ -3667,7 +3660,6 @@ inline emitter::instrDesc* emitter::emitNewInstrCns(emitAttr attr, cnsval_ssize_
 {
     if (instrDesc::fitsInSmallCns(cns))
     {
-        printf("Allocating ID descriptor of size %d\n", sizeof(instrDesc));
         instrDesc* id = emitAllocInstr(attr);
         id->idSmallCns(cns);
 
@@ -3679,7 +3671,6 @@ inline emitter::instrDesc* emitter::emitNewInstrCns(emitAttr attr, cnsval_ssize_
     }
     else
     {
-        printf("Allocating ID descriptor of size %d\n", sizeof(instrDescCns));
         instrDescCns* id = emitAllocInstrCns(attr, cns);
 
 #if EMITTER_STATS
