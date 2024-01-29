@@ -1929,7 +1929,7 @@ void CodeGen::genLclHeap(GenTree* tree)
         emit->emitIns_R_R_R(INS_sub, EA_PTRSIZE, REG_SPBASE, REG_SPBASE, regTmp);
 
         // Jump to loop and tickle new stack address
-        emit->emitIns_J(INS_j, nullptr, -4);
+        emit->emitIns_J(INS_j, nullptr, -5);
 
         // Done with stack tickle loop
         // genDefineTempLabel(done);
