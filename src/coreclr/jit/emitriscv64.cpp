@@ -1475,24 +1475,38 @@ void emitter::emitIns_J_R_R_SanityCheck(instruction ins, regNumber rs1, regNumbe
 }
 #endif // DEBUG
 
-void emitter::emitIns_J_R_R(instruction ins, emitAttr attr, regNumber rs1, regNumber rs2, int instrCount)
+void emitter::emitIns_J_R_R(instruction ins, emitAttr attr, BasicBlock* dst, regNumber rs1, regNumber rs2)
 {
 #ifdef DEBUG
+    assert(dst != nullptr);
+    assert(dst->HasFlag(BBF_HAS_LABEL));
     emitIns_J_R_R_SanityCheck(ins, rs1, rs2);
 #endif // DEBUG
-    assert(instrCount != 0);
-
     instrDescJmp* id = emitNewInstrJmp();
 
     id->idIns(ins);
-    id->idAddr()->iiaSetInstrCount(instrCount);
-    id->idjKeepLong = false;
-    id->idjShort    = true;
-    id->idSetIsBound();
+
+    id->idjShort = false;
+
+    // TODO-RISCV64: maybe deleted this.
+    id->idjKeepLong = emitComp->fgInDifferentRegions(emitComp->compCurBB, dst);
+#ifdef DEBUG
+    if (emitComp->opts.compLongAddress) // Force long branches
+        id->idjKeepLong = true;
+#endif // DEBUG
+
+    id->idAddr()->iiaBBlabel = dst;
+    id->idReg1(rs1);
+    id->idReg2(rs2);
     id->idjIG   = emitCurIG;
     id->idjOffs = emitCurIGsize;
     id->idInsOpt(INS_OPTS_J_cond);
     id->idCodeSize(4);
+
+    if (emitComp->opts.compReloc)
+    {
+        id->idSetIsDspReloc();
+    }
 
     /* Append this jump to this IG's jump list */
 
@@ -1502,6 +1516,8 @@ void emitter::emitIns_J_R_R(instruction ins, emitAttr attr, regNumber rs1, regNu
 #if EMITTER_STATS
     emitTotalIGjmps++;
 #endif
+
+    ++emitCounts_INS_OPTS_J;
 
     id->IDDEBUGINSTRSOURCE = 18;
 

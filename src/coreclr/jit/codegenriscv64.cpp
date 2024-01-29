@@ -7233,18 +7233,20 @@ inline void CodeGen::genJumpToThrowHlpBlk_la(
             ins = ins == INS_beq ? INS_bne : INS_beq;
         }
 
+        BasicBlock* skipLabel = genCreateTempLabel();
+
         if (addr == nullptr)
         {
             callType   = emitter::EC_INDIR_R;
             callTarget = REG_DEFAULT_HELPER_CALL_TARGET;
             if (compiler->opts.compReloc)
             {
-                emit->emitIns_J_R_R(ins, EA_PTRSIZE, reg1, reg2, 3 + 1);
+                emit->emitIns_J_R_R(ins, EA_PTRSIZE, skipLabel, reg1, reg2 /*, 3 + 1*/);
                 emit->emitIns_R_AI(INS_jal, EA_PTR_DSP_RELOC, callTarget, (ssize_t)pAddr);
             }
             else
             {
-                emit->emitIns_J_R_R(ins, EA_PTRSIZE, reg1, reg2, 9);
+                emit->emitIns_J_R_R(ins, EA_PTRSIZE, skipLabel, reg1, reg2/*, 9*/);
                 // TODO-RISCV64-CQ: In the future we may consider using emitter::emitLoadImmediate instead,
                 // which is less straightforward but offers slightly better codegen.
                 emitLoadConstAtAddr(GetEmitter(), callTarget, (ssize_t)pAddr);
@@ -7256,10 +7258,8 @@ inline void CodeGen::genJumpToThrowHlpBlk_la(
             callType   = emitter::EC_FUNC_TOKEN;
             callTarget = REG_NA;
 
-            emit->emitIns_J_R_R(ins, EA_PTRSIZE, reg1, reg2, compiler->opts.compReloc ? 3 : 9);
+            emit->emitIns_J_R_R(ins, EA_PTRSIZE, skipLabel, reg1, reg2 /*, compiler->opts.compReloc ? 3 : 9*/);
         }
-
-        BasicBlock* skipLabel = genCreateTempLabel();
 
         emit->emitIns_Call(callType, compiler->eeFindHelper(compiler->acdHelper(codeKind)),
                            INDEBUG_LDISASM_COMMA(nullptr) addr, 0, EA_UNKNOWN, EA_UNKNOWN, gcInfo.gcVarPtrSetCur,
