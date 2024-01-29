@@ -3685,6 +3685,7 @@ BYTE* emitter::emitOutputInstr_OptsNone(BYTE* dst, const instrDesc* id, instruct
         // I-Type instructions
         case INS_mov:
         case INS_addi:
+        case INS_andi:
         case INS_lb:
         case INS_lbu:
         case INS_lh:
