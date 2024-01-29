@@ -1495,6 +1495,7 @@ void emitter::emitIns_J_R_R(
     if (dst != nullptr)
     {
         assert(dst->HasFlag(BBF_HAS_LABEL));
+        assert(instrCount == 0);
 
         id->idjShort = false;
 
@@ -1515,7 +1516,7 @@ void emitter::emitIns_J_R_R(
     {
         assert(instrCount != 0);
 
-        id->idAddr()->iiaSetInstrCount(instrCount);
+        id->idAddr()->iiaSetInstrCount(instrCount - 1); // account for the current one
         id->idjKeepLong = false;
         id->idjShort    = true;
         id->idSetIsBound();
@@ -2918,6 +2919,7 @@ static constexpr unsigned kInstructionFunct2Mask = 0x06000000;
 {
     switch (ins)
     {
+        case INS_mov:
         case INS_jalr:
         case INS_lb:
         case INS_lh:
@@ -4085,13 +4087,6 @@ void emitter::emitDispBranchOffset(const instrDesc* id, const insGroup* ig) cons
         return;
     }
     unsigned insNum = emitFindInsNum(ig, id);
-
-    if (ig->igInsCnt < insNum + 1 + instrCount)
-    {
-        // TODO-RISCV64-BUG: This should be a labeled offset but does not contain an iiaIGlabel
-        printf("pc%+d instructions", instrCount);
-        return;
-    }
 
     UNATIVE_OFFSET srcOffs = ig->igOffs + emitFindOffset(ig, insNum + 1);
     UNATIVE_OFFSET dstOffs = ig->igOffs + emitFindOffset(ig, insNum + 1 + instrCount);
