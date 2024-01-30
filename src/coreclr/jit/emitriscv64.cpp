@@ -1056,6 +1056,16 @@ void emitter::emitIns_R_R_R_SanityCheck(instruction ins, regNumber rd, regNumber
             assert(isGeneralRegisterOrR0(reg1));
             assert(isGeneralRegister(reg2));
             break;
+        case INS_feq_s:
+        case INS_feq_d:
+        case INS_flt_d:
+        case INS_flt_s:
+        case INS_fle_s:
+        case INS_fle_d:
+            assert(isGeneralRegisterOrR0(rd));
+            assert(isFloatReg(rs1));
+            assert(isFloatReg(rs2));
+            break;
         case INS_fadd_s:
         case INS_fsub_s:
         case INS_fmul_s:
@@ -1065,9 +1075,6 @@ void emitter::emitIns_R_R_R_SanityCheck(instruction ins, regNumber rd, regNumber
         case INS_fsgnjx_s:
         case INS_fmin_s:
         case INS_fmax_s:
-        case INS_feq_s:
-        case INS_flt_s:
-        case INS_fle_s:
         case INS_fadd_d:
         case INS_fsub_d:
         case INS_fmul_d:
@@ -1077,9 +1084,6 @@ void emitter::emitIns_R_R_R_SanityCheck(instruction ins, regNumber rd, regNumber
         case INS_fsgnjx_d:
         case INS_fmin_d:
         case INS_fmax_d:
-        case INS_feq_d:
-        case INS_flt_d:
-        case INS_fle_d:
             assert(isFloatReg(rd));
             assert(isFloatReg(reg1));
             assert(isFloatReg(reg2));
@@ -2741,18 +2745,22 @@ static constexpr unsigned kInstructionFunct2Mask = 0x06000000;
         case INS_fsgnjx_s:
         case INS_fmin_s:
         case INS_fmax_s:
-        case INS_feq_s:
-        case INS_flt_s:
-        case INS_fle_s:
         case INS_fsgnj_d:
         case INS_fsgnjn_d:
         case INS_fsgnjx_d:
         case INS_fmin_d:
         case INS_fmax_d:
+            assert(isFloatReg(rd));
+            assert(isFloatReg(rs1));
+            assert(isFloatReg(rs2));
+            break;
+        case INS_feq_s:
         case INS_feq_d:
         case INS_flt_d:
+        case INS_flt_s:
+        case INS_fle_s:
         case INS_fle_d:
-            assert(isFloatReg(rd));
+            assert(isGeneralRegisterOrR0(rd));
             assert(isFloatReg(rs1));
             assert(isFloatReg(rs2));
             break;
