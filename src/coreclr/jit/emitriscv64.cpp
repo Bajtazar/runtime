@@ -860,8 +860,8 @@ void emitter::emitIns_R_R_I_SanityCheck(instruction ins, regNumber reg1, regNumb
         case INS_sw:
         case INS_sh:
         case INS_sb:
-            assert(isGeneralRegister(reg1));
-            assert(isGeneralRegisterOrR0(reg2));
+            assert(isGeneralRegisterOrR0(reg1));
+            assert(isGeneralRegister(reg2));
             break;
         case INS_fsd:
         case INS_fsw:
@@ -1052,6 +1052,7 @@ void emitter::emitIns_R_R_R_SanityCheck(instruction ins, regNumber rd, regNumber
         case INS_div:
         case INS_divu:
         case INS_divw:
+        case INS_divuw:
             assert(isGeneralRegisterOrR0(rd));
             assert(isGeneralRegisterOrR0(reg1));
             assert(isGeneralRegister(reg2));
