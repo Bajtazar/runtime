@@ -865,8 +865,8 @@ void emitter::emitIns_R_R_I_SanityCheck(instruction ins, regNumber reg1, regNumb
             break;
         case INS_fsd:
         case INS_fsw:
-            assert(isGeneralRegister(reg1));
-            assert(isFloatReg(reg2));
+            assert(isFloatReg(reg1));
+            assert(isGeneralRegister(reg2));
             break;
         case INS_lb:
         case INS_lbu:
@@ -1063,8 +1063,8 @@ void emitter::emitIns_R_R_R_SanityCheck(instruction ins, regNumber rd, regNumber
         case INS_fle_s:
         case INS_fle_d:
             assert(isGeneralRegisterOrR0(rd));
-            assert(isFloatReg(rs1));
-            assert(isFloatReg(rs2));
+            assert(isFloatReg(reg1));
+            assert(isFloatReg(reg2));
             break;
         case INS_fadd_s:
         case INS_fsub_s:
@@ -3005,8 +3005,8 @@ static constexpr unsigned kInstructionFunct2Mask = 0x06000000;
             break;
         case INS_fsw:
         case INS_fsd:
-            assert(isGeneralRegister(rs1));
-            assert(isFloatReg(rs2));
+            assert(isFloatReg(rs1));
+            assert(isGeneralRegister(rs2));
             break;
         default:
             NO_WAY("Illegal ins within emitOutput_STypeInstr!");
