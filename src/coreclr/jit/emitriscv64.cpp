@@ -753,8 +753,6 @@ void emitter::emitIns_R_R_SanityCheck(instruction ins, regNumber reg1, regNumber
             break;
         case INS_lr_w:
         case INS_lr_d:
-        case INS_sc_d:
-        case INS_sc_w:
             assert(isGeneralRegisterOrR0(reg1));
             assert(isGeneralRegister(reg2));
             break;
@@ -838,8 +836,6 @@ void emitter::emitIns_R_R_SetFloatInstrAdditionalData(instrDesc* id, instruction
             break;
         case INS_lr_w:
         case INS_lr_d:
-        case INS_sc_d:
-        case INS_sc_w:
             id->idReg3(static_cast<regNumber>(0));
             // Current Api is not ready to handle atomic memory ordering
             id->idAtomicAcquire(true);
@@ -1090,6 +1086,7 @@ void emitter::emitIns_R_R_R_SanityCheck(instruction ins, regNumber rd, regNumber
             assert(isFloatReg(reg2));
             break;
         default:
+            emitDispInst(ins);
             NO_WAY("illegal ins within emitIns_R_R_R!");
             break;
     }
