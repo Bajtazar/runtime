@@ -3751,6 +3751,7 @@ BYTE* emitter::emitOutputInstr_OptsNone(BYTE* dst, const instrDesc* id, instruct
         case INS_div:
         case INS_divu:
         case INS_divw:
+        case INS_divuw:
         case INS_fmv_x_d:
         case INS_fmv_x_w:
         case INS_fclass_s:
