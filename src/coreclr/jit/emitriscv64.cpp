@@ -3005,8 +3005,8 @@ static constexpr unsigned kInstructionFunct2Mask = 0x06000000;
             break;
         case INS_fsw:
         case INS_fsd:
-            assert(isFloatReg(rs1));
-            assert(isGeneralRegister(rs2));
+            assert(isGeneralRegister(rs1));
+            assert(isFloatReg(rs2));
             break;
         default:
             NO_WAY("Illegal ins within emitOutput_STypeInstr!");
