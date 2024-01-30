@@ -2771,6 +2771,12 @@ static constexpr unsigned kInstructionFunct2Mask = 0x06000000;
             assert(isGeneralRegisterOrR0(rs1));
             assert(rs2 == 0);
             break;
+        case INS_fmv_x_d:
+        case INS_fmv_x_w:
+            assert(isGeneralRegisterOrR0(rd));
+            assert(isFloatReg(rs1));
+            assert(rs2 == 0);
+            break;
         default:
             NO_WAY("Illegal ins within emitOutput_RTypeInstr!");
             break;
