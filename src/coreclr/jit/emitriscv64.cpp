@@ -3574,13 +3574,12 @@ BYTE* emitter::emitOutputInstr_OptsJalr(BYTE* dst, instrDescJmp* jmp, const insG
     assert((immediate & 0x03) == 0);
 
     *ins = jmp->idIns();
-    assert(jmp->idCodeSize() > 4); // The original INS_OPTS_JALR: not used by now!!!
     switch (jmp->idCodeSize())
     {
         case 8:
             return emitOutputInstr_OptsJalr8(dst, jmp, *ins, immediate);
         case 24:
-            assert((*ins == INS_jal) || (*ins == INS_j));
+            assert(jmp->idInsIs(INS_jal, INS_j));
             return emitOutputInstr_OptsJalr24(dst, immediate);
         case 28:
             return emitOutputInstr_OptsJalr28(dst, jmp, *ins, immediate);

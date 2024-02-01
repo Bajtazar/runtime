@@ -1928,9 +1928,8 @@ void CodeGen::genLclHeap(GenTree* tree)
 
         emit->emitIns_R_R_R(INS_sub, EA_PTRSIZE, REG_SPBASE, REG_SPBASE, regTmp);
 
-        ssize_t imm = -4 << 2;
         // Jump to loop and tickle new stack address
-        emit->emitIns_I(INS_j, EA_PTRSIZE, imm);
+        emit->emitIns_J(INS_j, nullptr, -4);
 
         // Done with stack tickle loop
         // genDefineTempLabel(done);
@@ -7234,20 +7233,20 @@ inline void CodeGen::genJumpToThrowHlpBlk_la(
             ins = ins == INS_beq ? INS_bne : INS_beq;
         }
 
+        BasicBlock* skipLabel = genCreateTempLabel();
+
         if (addr == nullptr)
         {
             callType   = emitter::EC_INDIR_R;
             callTarget = REG_DEFAULT_HELPER_CALL_TARGET;
             if (compiler->opts.compReloc)
             {
-                ssize_t imm = (3 + 1) << 2;
-                emit->emitIns_R_R_I(ins, EA_PTRSIZE, reg1, reg2, imm);
+                emit->emitIns_J_R_R(ins, EA_PTRSIZE, skipLabel, reg1, reg2);
                 emit->emitIns_R_AI(INS_jal, EA_PTR_DSP_RELOC, callTarget, (ssize_t)pAddr);
             }
             else
             {
-                ssize_t imm = 9 << 2;
-                emit->emitIns_R_R_I(ins, EA_PTRSIZE, reg1, reg2, imm);
+                emit->emitIns_J_R_R(ins, EA_PTRSIZE, skipLabel, reg1, reg2);
                 // TODO-RISCV64-CQ: In the future we may consider using emitter::emitLoadImmediate instead,
                 // which is less straightforward but offers slightly better codegen.
                 emitLoadConstAtAddr(GetEmitter(), callTarget, (ssize_t)pAddr);
@@ -7259,16 +7258,8 @@ inline void CodeGen::genJumpToThrowHlpBlk_la(
             callType   = emitter::EC_FUNC_TOKEN;
             callTarget = REG_NA;
 
-            ssize_t imm = 9 << 2;
-            if (compiler->opts.compReloc)
-            {
-                imm = 3 << 2;
-            }
-
-            emit->emitIns_R_R_I(ins, EA_PTRSIZE, reg1, reg2, imm);
+            emit->emitIns_J_R_R(ins, EA_PTRSIZE, skipLabel, reg1, reg2);
         }
-
-        BasicBlock* skipLabel = genCreateTempLabel();
 
         emit->emitIns_Call(callType, compiler->eeFindHelper(compiler->acdHelper(codeKind)),
                            INDEBUG_LDISASM_COMMA(nullptr) addr, 0, EA_UNKNOWN, EA_UNKNOWN, gcInfo.gcVarPtrSetCur,
