@@ -1090,9 +1090,9 @@ void CodeGen::genZeroInitFrameUsingBlockInit(int untrLclHi, int untrLclLo, regNu
         GetEmitter()->emitIns_R_R_I(INS_sd, EA_PTRSIZE, REG_R0, rAddr, 0 + padding);
         GetEmitter()->emitIns_R_R_I(INS_addi, EA_PTRSIZE, rCnt, rCnt, -1);
 
-        // bne rCnt, zero, -4 * 4
+        // bne rCnt, zero, -4 instructions
         GetEmitter()->emitIns_R_R_I(INS_addi, EA_PTRSIZE, rAddr, rAddr, 2 * REGSIZE_BYTES);
-        GetEmitter()->emitIns_J_R_R(INS_bne, EA_PTRSIZE, rCnt, REG_R0, -4);
+        GetEmitter()->emitIns_J_R_R(INS_bne, EA_PTRSIZE, nullptr, rCnt, REG_R0, -4);
 
         uCntBytes %= REGSIZE_BYTES * 2;
     }
@@ -1322,7 +1322,7 @@ void CodeGen::genCodeForIncSaturate(GenTree* tree)
 
     GetEmitter()->emitIns_R_R_I(INS_addi, attr, targetReg, operandReg, 1);
     // bne targetReg, zero, 2 instructions
-    GetEmitter()->emitIns_J_R_R(INS_bne, attr, targetReg, REG_R0, 2);
+    GetEmitter()->emitIns_J_R_R(INS_bne, attr, nullptr, targetReg, REG_R0, 2);
     GetEmitter()->emitIns_R_R_I(INS_xori, attr, targetReg, targetReg, -1);
 
     genProduceReg(tree);
@@ -1856,7 +1856,7 @@ void CodeGen::genLclHeap(GenTree* tree)
         emit->emitIns_R_R_I(INS_addi, emitActualTypeSize(type), regCnt, regCnt, -16);
 
         assert(imm == (-4 << 2)); // goto loop.
-        emit->emitIns_J_R_R(INS_bne, EA_PTRSIZE, regCnt, REG_R0, -4);
+        emit->emitIns_J_R_R(INS_bne, EA_PTRSIZE, nullptr, regCnt, REG_R0, -4);
 
         lastTouchDelta = 0;
     }
@@ -1907,7 +1907,7 @@ void CodeGen::genLclHeap(GenTree* tree)
         emit->emitIns_R_R_R(INS_sub, EA_PTRSIZE, regCnt, REG_SPBASE, regCnt);
 
         // Overflow, set regCnt to lowest possible value
-        emit->emitIns_J_R_R(INS_beq, EA_PTRSIZE, tempReg, REG_R0, 2);
+        emit->emitIns_J_R_R(INS_beq, EA_PTRSIZE, nullptr, tempReg, REG_R0, 2);
         emit->emitIns_R_R_I(INS_addi, EA_PTRSIZE, regCnt, REG_R0, 0);
 
         assert(compiler->eeGetPageSize() == ((compiler->eeGetPageSize() >> 12) << 12));
@@ -1924,7 +1924,7 @@ void CodeGen::genLclHeap(GenTree* tree)
         assert(regTmp != tempReg);
 
         // goto done.
-        emit->emitIns_J_R_R(INS_bltu, EA_PTRSIZE, tempReg, regCnt, 3);
+        emit->emitIns_J_R_R(INS_bltu, EA_PTRSIZE, nullptr, tempReg, regCnt, 3);
 
         emit->emitIns_R_R_R(INS_sub, EA_PTRSIZE, REG_SPBASE, REG_SPBASE, regTmp);
 
