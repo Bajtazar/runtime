@@ -1091,9 +1091,8 @@ void CodeGen::genZeroInitFrameUsingBlockInit(int untrLclHi, int untrLclLo, regNu
         GetEmitter()->emitIns_R_R_I(INS_addi, EA_PTRSIZE, rCnt, rCnt, -1);
 
         // bne rCnt, zero, -4 * 4
-        ssize_t imm = -16;
         GetEmitter()->emitIns_R_R_I(INS_addi, EA_PTRSIZE, rAddr, rAddr, 2 * REGSIZE_BYTES);
-        GetEmitter()->emitIns_R_R_I(INS_bne, EA_PTRSIZE, rCnt, REG_R0, imm);
+        GetEmitter()->emitIns_J_R_R(INS_bne, EA_PTRSIZE, rCnt, REG_R0, -4);
 
         uCntBytes %= REGSIZE_BYTES * 2;
     }
@@ -1322,8 +1321,8 @@ void CodeGen::genCodeForIncSaturate(GenTree* tree)
     emitAttr  attr       = emitActualTypeSize(tree);
 
     GetEmitter()->emitIns_R_R_I(INS_addi, attr, targetReg, operandReg, 1);
-    // bne targetReg, zero, 2 * 4
-    GetEmitter()->emitIns_R_R_I(INS_bne, attr, targetReg, REG_R0, 8);
+    // bne targetReg, zero, 2 instructions
+    GetEmitter()->emitIns_J_R_R(INS_bne, attr, targetReg, REG_R0, 2);
     GetEmitter()->emitIns_R_R_I(INS_xori, attr, targetReg, targetReg, -1);
 
     genProduceReg(tree);
@@ -1857,7 +1856,7 @@ void CodeGen::genLclHeap(GenTree* tree)
         emit->emitIns_R_R_I(INS_addi, emitActualTypeSize(type), regCnt, regCnt, -16);
 
         assert(imm == (-4 << 2)); // goto loop.
-        emit->emitIns_R_R_I(INS_bne, EA_PTRSIZE, regCnt, REG_R0, (-4 << 2));
+        emit->emitIns_J_R_R(INS_bne, EA_PTRSIZE, regCnt, REG_R0, -4);
 
         lastTouchDelta = 0;
     }
@@ -1908,7 +1907,7 @@ void CodeGen::genLclHeap(GenTree* tree)
         emit->emitIns_R_R_R(INS_sub, EA_PTRSIZE, regCnt, REG_SPBASE, regCnt);
 
         // Overflow, set regCnt to lowest possible value
-        emit->emitIns_R_R_I(INS_beq, EA_PTRSIZE, tempReg, REG_R0, 2 << 2);
+        emit->emitIns_J_R_R(INS_beq, EA_PTRSIZE, tempReg, REG_R0, 2);
         emit->emitIns_R_R_I(INS_addi, EA_PTRSIZE, regCnt, REG_R0, 0);
 
         assert(compiler->eeGetPageSize() == ((compiler->eeGetPageSize() >> 12) << 12));
@@ -1924,12 +1923,12 @@ void CodeGen::genLclHeap(GenTree* tree)
 
         assert(regTmp != tempReg);
 
-        ssize_t imm = 3 << 2; // goto done.
-        emit->emitIns_R_R_I(INS_bltu, EA_PTRSIZE, tempReg, regCnt, imm);
+        // goto done.
+        emit->emitIns_J_R_R(INS_bltu, EA_PTRSIZE, tempReg, regCnt, 3);
 
         emit->emitIns_R_R_R(INS_sub, EA_PTRSIZE, REG_SPBASE, REG_SPBASE, regTmp);
 
-        imm = -4 << 2;
+        ssize_t imm = -4 << 2;
         // Jump to loop and tickle new stack address
         emit->emitIns_I(INS_j, EA_PTRSIZE, imm);
 

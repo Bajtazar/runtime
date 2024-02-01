@@ -913,6 +913,7 @@ void emitter::emitIns_R_R_I_SanityCheck(instruction ins, regNumber reg1, regNumb
             assert(isGeneralRegister(reg2));
             break;
         default:
+            emitDispInst(ins);
             NO_WAY("illegal ins within emitIns_R_R_I!");
             break;
     }
