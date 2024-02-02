@@ -1414,23 +1414,17 @@ void emitter::emitIns_R_L(instruction ins, emitAttr attr, BasicBlock* dst, regNu
     appendToCurIG(id);
 }
 
-void emitter::emitIns_J_R(instruction ins, emitAttr attr, BasicBlock* dst, regNumber reg)
-{
-    NYI_RISCV64("emitIns_J_R-----unimplemented/unused on RISCV64 yet----");
-}
-
-void emitter::emitIns_J_R_I(instruction ins, emitAttr attr, BasicBlock* dst, regNumber reg, int imm)
+void emitter::emitIns_J_R_I(instruction ins, BasicBlock* dst, regNumber reg, ssize_t immediate)
 {
     assert(dst != nullptr);
     assert(ins == INS_jal);
     assert(dst->HasFlag(BBF_HAS_LABEL));
-    assert((EA_SIZE(attr) == EA_4BYTE || (EA_SIZE(attr) == EA_8BYTE)));
 
     instrDescJmp* id = emitNewInstrJmp();
     id->idIns(ins);
     id->idCodeSize(4);
     id->idReg1(reg);
-    id->idSmallCns(TrimSignedToImm21(imm));
+    id->idSmallCns(TrimSignedToImm21(immediate));
     id->idjShort = false;
     id->idInsOpt(INS_OPTS_NONE);
 
@@ -1440,8 +1434,7 @@ void emitter::emitIns_J_R_I(instruction ins, emitAttr attr, BasicBlock* dst, reg
     id->idjIG   = emitCurIG;
     id->idjOffs = emitCurIGsize;
 
-    /* Append this jump to this IG's jump list */
-
+    // Append this jump to this IG's jump list
     id->idjNext      = emitCurIGjmpList;
     emitCurIGjmpList = id;
 
