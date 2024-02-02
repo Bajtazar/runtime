@@ -27,11 +27,8 @@ struct CnsVal
 
 const char* emitFPregName(unsigned reg, bool varName = true);
 const char* emitVectorRegName(regNumber reg);
+void emitDispInst(instruction ins);
 #endif // DEBUG
-
-void emitIns_J_cond_la(instruction ins, BasicBlock* dst, regNumber reg1 = REG_R0, regNumber reg2 = REG_R0);
-
-void emitLoadImmediate(emitAttr attr, regNumber reg, ssize_t imm);
 
 /************************************************************************/
 /*  Private members that deal with target-dependent instr. descriptors  */
@@ -286,7 +283,9 @@ void emitIns_J(instruction ins, BasicBlock* dst, int instrCount = 0);
 public:
 void emitIns(instruction ins);
 
-void emitDispInst(instruction ins);
+void emitIns_J_cond_la(instruction ins, BasicBlock* dst, regNumber reg1 = REG_R0, regNumber reg2 = REG_R0);
+
+void emitLoadImmediate(emitAttr attr, regNumber reg, ssize_t imm);
 
 void emitIns_S_R(instruction ins, emitAttr attr, regNumber ireg, int varx, int offs);
 void emitIns_S_R_R(instruction ins, emitAttr attr, regNumber ireg, regNumber tmpReg, int varx, int offs);
