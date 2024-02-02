@@ -597,11 +597,6 @@ void emitter::emitIns_I(instruction ins, emitAttr attr, ssize_t imm)
     appendToCurIG(id);
 }
 
-void emitter::emitIns_I_I(instruction ins, emitAttr attr, ssize_t cc, ssize_t offs)
-{
-    NYI_RISCV64("emitIns_I_I-----unimplemented/unused on RISCV64 yet----");
-}
-
 #ifdef DEBUG
 
 void emitter::emitIns_R_I_SanityCheck(instruction ins, regNumber reg)
@@ -1155,34 +1150,6 @@ void emitter::emitIns_R_R_R(
     appendToCurIG(id);
 }
 
-/*****************************************************************************
- *
- *  Add an instruction referencing three registers and a constant.
- */
-
-void emitter::emitIns_R_R_R_I(instruction ins,
-                              emitAttr    attr,
-                              regNumber   reg1,
-                              regNumber   reg2,
-                              regNumber   reg3,
-                              ssize_t     imm,
-                              insOpts     opt /* = INS_OPTS_NONE */,
-                              emitAttr    attrReg2 /* = EA_UNKNOWN */)
-{
-    NYI_RISCV64("emitIns_R_R_R_I-----unimplemented/unused on RISCV64 yet----");
-}
-
-/*****************************************************************************
- *
- *  Add an instruction referencing two registers and two constants.
- */
-
-void emitter::emitIns_R_R_I_I(
-    instruction ins, emitAttr attr, regNumber reg1, regNumber reg2, int imm1, int imm2, insOpts opt)
-{
-    NYI_RISCV64("emitIns_R_R_I_I-----unimplemented/unused on RISCV64 yet----");
-}
-
 #ifdef DEBUG
 
 void emitter::emitIns_R_R_R_R_SanityCheck(instruction ins, regNumber rd, regNumber rs1, regNumber rs2, regNumber rs3)
@@ -1287,11 +1254,6 @@ void emitter::emitIns_R_C(
     id->IDDEBUGINSTRSOURCE = 11;
 
     appendToCurIG(id);
-}
-
-void emitter::emitIns_R_AR(instruction ins, emitAttr attr, regNumber ireg, regNumber reg, int offs)
-{
-    NYI_RISCV64("emitIns_R_AR-----unimplemented/unused on RISCV64 yet----");
 }
 
 // This computes address from the immediate which is relocatable.

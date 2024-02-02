@@ -288,8 +288,6 @@ void emitLoadImmediate(emitAttr attr, regNumber reg, ssize_t imm);
 
 void emitIns_I(instruction ins, emitAttr attr, ssize_t imm);
 
-void emitIns_I_I(instruction ins, emitAttr attr, ssize_t cc, ssize_t offs);
-
 void emitIns_S_R(instruction ins, emitAttr attr, regNumber ireg, int varx, int offs);
 
 void emitIns_S_R_R(instruction ins, emitAttr attr, regNumber ireg, regNumber tmpReg, int varx, int offs);
@@ -314,18 +312,6 @@ void emitIns_R_I_I(
 void emitIns_R_R_R(
     instruction ins, emitAttr attr, regNumber reg1, regNumber reg2, regNumber reg3, insOpts opt = INS_OPTS_NONE);
 
-void emitIns_R_R_R_I(instruction ins,
-                     emitAttr    attr,
-                     regNumber   reg1,
-                     regNumber   reg2,
-                     regNumber   reg3,
-                     ssize_t     imm,
-                     insOpts     opt      = INS_OPTS_NONE,
-                     emitAttr    attrReg2 = EA_UNKNOWN);
-
-void emitIns_R_R_I_I(
-    instruction ins, emitAttr attr, regNumber reg1, regNumber reg2, int imm1, int imm2, insOpts opt = INS_OPTS_NONE);
-
 void emitIns_R_R_R_R(instruction ins, emitAttr attr, regNumber reg1, regNumber reg2, regNumber reg3, regNumber reg4);
 
 void emitIns_R_C(
@@ -336,8 +322,6 @@ void emitIns_R_L(instruction ins, emitAttr attr, BasicBlock* dst, regNumber reg)
 void emitIns_J_R_I(instruction ins, BasicBlock* dst, regNumber reg, ssize_t immediate);
 
 void emitIns_J_R_R(instruction ins, BasicBlock* dst, regNumber rs1, regNumber rs2, int instrCount = 0);
-
-void emitIns_R_AR(instruction ins, emitAttr attr, regNumber ireg, regNumber reg, int offs);
 
 void emitIns_R_AI(instruction ins,
                   emitAttr    attr,
