@@ -5509,7 +5509,7 @@ regNumber emitter::emitInsTernary(instruction ins, emitAttr attr, GenTree* dst, 
                 {
                     // B > 0 and C > 0, if A < B, goto overflow
                     BasicBlock* tmpLabel = codeGen->genCreateTempLabel();
-                    emitIns_J_cond_la(INS_bge, tmpLabel, REG_R0, tempReg);
+                    emitIns_J_R_R(INS_bge, tmpLabel, REG_R0, tempReg);
                     emitIns_R_R_I(INS_slti, EA_PTRSIZE, tempReg, dstReg, imm);
 
                     codeGen->genJumpToThrowHlpBlk_la(SCK_OVERFLOW, INS_bne, tempReg);
@@ -5520,7 +5520,7 @@ regNumber emitter::emitInsTernary(instruction ins, emitAttr attr, GenTree* dst, 
                 {
                     // B < 0 and C < 0, if A > B, goto overflow
                     BasicBlock* tmpLabel = codeGen->genCreateTempLabel();
-                    emitIns_J_cond_la(INS_bge, tmpLabel, tempReg, REG_R0);
+                    emitIns_J_R_R(INS_bge, tmpLabel, tempReg, REG_R0);
                     emitIns_R_R_I(INS_addi, attr, tempReg, REG_R0, imm);
 
                     codeGen->genJumpToThrowHlpBlk_la(SCK_OVERFLOW, INS_blt, tempReg, nullptr, dstReg);
@@ -5737,12 +5737,12 @@ regNumber emitter::emitInsTernary(instruction ins, emitAttr attr, GenTree* dst, 
                         BasicBlock* tmpLabel2 = codeGen->genCreateTempLabel();
                         BasicBlock* tmpLabel3 = codeGen->genCreateTempLabel();
 
-                        emitIns_J_cond_la(INS_bne, tmpLabel, tempReg1, REG_R0);
+                        emitIns_J_R_R(INS_bne, tmpLabel, tempReg1, REG_R0);
 
-                        emitIns_J_cond_la(INS_bne, tmpLabel3, tempReg2, REG_R0);
+                        emitIns_J_R_R(INS_bne, tmpLabel3, tempReg2, REG_R0);
 
                         // B > 0 and C > 0, if A < B, goto overflow
-                        emitIns_J_cond_la(INS_bge, tmpLabel, isAdd ? dstReg : saveOperReg1,
+                        emitIns_J_R_R(INS_bge, tmpLabel, isAdd ? dstReg : saveOperReg1,
                                           isAdd ? saveOperReg1 : saveOperReg2);
 
                         codeGen->genDefineTempLabel(tmpLabel2);
@@ -5752,7 +5752,7 @@ regNumber emitter::emitInsTernary(instruction ins, emitAttr attr, GenTree* dst, 
                         codeGen->genDefineTempLabel(tmpLabel3);
 
                         // B < 0 and C < 0, if A > B, goto overflow
-                        emitIns_J_cond_la(INS_blt, tmpLabel2, isAdd ? saveOperReg1 : saveOperReg2,
+                        emitIns_J_R_R(INS_blt, tmpLabel2, isAdd ? saveOperReg1 : saveOperReg2,
                                           isAdd ? dstReg : saveOperReg1);
 
                         codeGen->genDefineTempLabel(tmpLabel);

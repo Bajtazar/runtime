@@ -1713,7 +1713,7 @@ void CodeGen::genLclHeap(GenTree* tree)
         // If 0 bail out by returning null in targetReg
         genConsumeRegAndCopy(size, targetReg);
         endLabel = genCreateTempLabel();
-        emit->emitIns_J_cond_la(INS_beq, endLabel, targetReg, REG_R0);
+        emit->emitIns_J_R_R(INS_beq, endLabel, targetReg, REG_R0);
 
         // Compute the size of the block to allocate and perform alignment.
         // If compInitMem=true, we can reuse targetReg as regcnt,
@@ -2127,12 +2127,14 @@ void CodeGen::genCodeForDivMod(GenTreeOp* tree)
             if ((exceptions & ExceptionSetFlags::ArithmeticException) != ExceptionSetFlags::None)
             {
                 if (tempReg == REG_NA)
+                {
                     tempReg = tree->GetSingleTempReg();
+                }
 
                 // Check if the divisor is not -1 branch to 'sdivLabel'
                 emit->emitIns_R_R_I(INS_addi, EA_PTRSIZE, tempReg, REG_ZERO, -1);
                 BasicBlock* sdivLabel = genCreateTempLabel(); // can optimize for riscv64.
-                emit->emitIns_J_cond_la(INS_bne, sdivLabel, tempReg, divisorReg);
+                emit->emitIns_J_R_R(INS_bne, sdivLabel, tempReg, divisorReg);
 
                 // If control flow continues past here the 'divisorReg' is known to be -1
                 regNumber dividendReg = tree->gtGetOp1()->GetRegNum();
@@ -2649,7 +2651,7 @@ void CodeGen::genCodeForCmpXchg(GenTreeCmpXchg* treeNode)
 
     genDefineTempLabel(retry);
     e->emitIns_R_R(is4 ? INS_lr_w : INS_lr_d, size, target, loc); // load original value
-    e->emitIns_J_cond_la(INS_bne, fail, target, comparand);                 // fail if doesn’t match
+    e->emitIns_J_R_R(INS_bne, fail, target, comparand);                 // fail if doesn’t match
     e->emitIns_R_R_R(is4 ? INS_sc_w : INS_sc_d, size, storeErr, loc, val);  // try to update
     e->emitIns_J(INS_bnez, retry, storeErr);                                // retry if update failed
     genDefineTempLabel(fail);
@@ -4915,7 +4917,7 @@ void CodeGen::genEmitGSCookieCheck(bool pushReg)
 
     // Compare with the GC cookie constant
     BasicBlock* gsCheckBlk = genCreateTempLabel();
-    GetEmitter()->emitIns_J_cond_la(INS_beq, gsCheckBlk, regGSConst, regGSValue);
+    GetEmitter()->emitIns_J_R_R(INS_beq, gsCheckBlk, regGSConst, regGSValue);
 
     // regGSConst and regGSValue aren't needed anymore, we can use them for helper call
     genEmitHelperCall(CORINFO_HELP_FAIL_FAST, 0, EA_UNKNOWN, regGSConst);
