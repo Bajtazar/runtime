@@ -323,6 +323,8 @@ void emitIns_J_R_I(instruction ins, BasicBlock* dst, regNumber reg, ssize_t imme
 
 void emitIns_J_R_R(instruction ins, BasicBlock* dst, regNumber rs1, regNumber rs2, int instrCount = 0);
 
+void emitIns_R_AR(instruction ins, emitAttr attr, regNumber ireg, regNumber reg, int offs);
+
 void emitIns_R_AI(instruction ins,
                   emitAttr    attr,
                   regNumber   reg,

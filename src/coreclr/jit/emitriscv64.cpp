@@ -1256,6 +1256,11 @@ void emitter::emitIns_R_C(
     appendToCurIG(id);
 }
 
+void emitter::emitIns_R_AR(instruction ins, emitAttr attr, regNumber ireg, regNumber reg, int offs)
+{
+    NYI_RISCV64("emitIns_R_AR-----unimplemented/unused on RISCV64 yet----");
+}
+
 // This computes address from the immediate which is relocatable.
 void emitter::emitIns_R_AI(instruction ins,
                            emitAttr    attr,
