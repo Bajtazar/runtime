@@ -2668,6 +2668,8 @@ static constexpr unsigned kInstructionFunct2Mask = 0x06000000;
             break;
         case INS_fmv_x_d:
         case INS_fmv_x_w:
+        case INS_fclass_s:
+        case INS_fclass_d:
             assert(isGeneralRegisterOrR0(rd));
             assert(isFloatReg(rs1));
             assert(rs2 == 0);
