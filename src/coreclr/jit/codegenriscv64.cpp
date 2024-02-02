@@ -1092,7 +1092,7 @@ void CodeGen::genZeroInitFrameUsingBlockInit(int untrLclHi, int untrLclLo, regNu
 
         // bne rCnt, zero, -4 instructions
         GetEmitter()->emitIns_R_R_I(INS_addi, EA_PTRSIZE, rAddr, rAddr, 2 * REGSIZE_BYTES);
-        GetEmitter()->emitIns_J_R_R(INS_bne, EA_PTRSIZE, nullptr, rCnt, REG_R0, -4);
+        GetEmitter()->emitIns_J_R_R(INS_bne, nullptr, rCnt, REG_R0, -4);
 
         uCntBytes %= REGSIZE_BYTES * 2;
     }
@@ -1322,7 +1322,7 @@ void CodeGen::genCodeForIncSaturate(GenTree* tree)
 
     GetEmitter()->emitIns_R_R_I(INS_addi, attr, targetReg, operandReg, 1);
     // bne targetReg, zero, 2 instructions
-    GetEmitter()->emitIns_J_R_R(INS_bne, attr, nullptr, targetReg, REG_R0, 2);
+    GetEmitter()->emitIns_J_R_R(INS_bne, nullptr, targetReg, REG_R0, 2);
     GetEmitter()->emitIns_R_R_I(INS_xori, attr, targetReg, targetReg, -1);
 
     genProduceReg(tree);
@@ -1856,7 +1856,7 @@ void CodeGen::genLclHeap(GenTree* tree)
         emit->emitIns_R_R_I(INS_addi, emitActualTypeSize(type), regCnt, regCnt, -16);
 
         assert(imm == (-4 << 2)); // goto loop.
-        emit->emitIns_J_R_R(INS_bne, EA_PTRSIZE, nullptr, regCnt, REG_R0, -4);
+        emit->emitIns_J_R_R(INS_bne, nullptr, regCnt, REG_R0, -4);
 
         lastTouchDelta = 0;
     }
@@ -1907,7 +1907,7 @@ void CodeGen::genLclHeap(GenTree* tree)
         emit->emitIns_R_R_R(INS_sub, EA_PTRSIZE, regCnt, REG_SPBASE, regCnt);
 
         // Overflow, set regCnt to lowest possible value
-        emit->emitIns_J_R_R(INS_beq, EA_PTRSIZE, nullptr, tempReg, REG_R0, 2);
+        emit->emitIns_J_R_R(INS_beq, nullptr, tempReg, REG_R0, 2);
         emit->emitIns_R_R_I(INS_addi, EA_PTRSIZE, regCnt, REG_R0, 0);
 
         assert(compiler->eeGetPageSize() == ((compiler->eeGetPageSize() >> 12) << 12));
@@ -1924,7 +1924,7 @@ void CodeGen::genLclHeap(GenTree* tree)
         assert(regTmp != tempReg);
 
         // goto done.
-        emit->emitIns_J_R_R(INS_bltu, EA_PTRSIZE, nullptr, tempReg, regCnt, 3);
+        emit->emitIns_J_R_R(INS_bltu, nullptr, tempReg, regCnt, 3);
 
         emit->emitIns_R_R_R(INS_sub, EA_PTRSIZE, REG_SPBASE, REG_SPBASE, regTmp);
 
@@ -7241,12 +7241,12 @@ inline void CodeGen::genJumpToThrowHlpBlk_la(
             callTarget = REG_DEFAULT_HELPER_CALL_TARGET;
             if (compiler->opts.compReloc)
             {
-                emit->emitIns_J_R_R(ins, EA_PTRSIZE, skipLabel, reg1, reg2);
+                emit->emitIns_J_R_R(ins, skipLabel, reg1, reg2);
                 emit->emitIns_R_AI(INS_jal, EA_PTR_DSP_RELOC, callTarget, (ssize_t)pAddr);
             }
             else
             {
-                emit->emitIns_J_R_R(ins, EA_PTRSIZE, skipLabel, reg1, reg2);
+                emit->emitIns_J_R_R(ins, skipLabel, reg1, reg2);
                 // TODO-RISCV64-CQ: In the future we may consider using emitter::emitLoadImmediate instead,
                 // which is less straightforward but offers slightly better codegen.
                 emitLoadConstAtAddr(GetEmitter(), callTarget, (ssize_t)pAddr);
@@ -7258,7 +7258,7 @@ inline void CodeGen::genJumpToThrowHlpBlk_la(
             callType   = emitter::EC_FUNC_TOKEN;
             callTarget = REG_NA;
 
-            emit->emitIns_J_R_R(ins, EA_PTRSIZE, skipLabel, reg1, reg2);
+            emit->emitIns_J_R_R(ins, skipLabel, reg1, reg2);
         }
 
         emit->emitIns_Call(callType, compiler->eeFindHelper(compiler->acdHelper(codeKind)),

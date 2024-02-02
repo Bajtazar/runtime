@@ -1480,8 +1480,22 @@ void emitter::emitIns_J_R_R_SanityCheck(instruction ins, regNumber rs1, regNumbe
 #endif // DEBUG
 
 void emitter::emitIns_J_R_R(
-    instruction ins, emitAttr attr, BasicBlock* dst, regNumber rs1, regNumber rs2, int instrCount /* = 0*/)
+    instruction ins, BasicBlock* dst, regNumber rs1, regNumber rs2, int instrCount /* = 0*/)
 {
+    // TODO-RISCV64:
+    //   Now the emitIns_J_cond_la() is only the short condition branch.
+    //   There is no long condition branch for RISCV64 so far.
+    //   For RISCV64 , the long condition branch is like this:
+    //     --->  branch_condition  condition_target;     //here is the condition branch, short branch is enough.
+    //     --->  jump jump_target; (this supporting the long jump.)
+    //     condition_target:
+    //     ...
+    //     ...
+    //     jump_target:
+    //
+    //
+    // INS_OPTS_J_cond: placeholders.  1-ins.
+    //   ins  reg1, reg2, dst
 #ifdef DEBUG
     emitIns_J_R_R_SanityCheck(ins, rs1, rs2);
 #endif // DEBUG
@@ -1533,8 +1547,6 @@ void emitter::emitIns_J_R_R(
 #if EMITTER_STATS
     emitTotalIGjmps++;
 #endif
-
-    ++emitCounts_INS_OPTS_J;
 
     id->IDDEBUGINSTRSOURCE = 18;
 
@@ -1601,61 +1613,6 @@ void emitter::emitIns_J(instruction ins, BasicBlock* dst, int instrCount)
 #endif
 
     id->IDDEBUGINSTRSOURCE = 15;
-
-    appendToCurIG(id);
-}
-
-void emitter::emitIns_J_cond_la(instruction ins, BasicBlock* dst, regNumber reg1, regNumber reg2)
-{
-    // TODO-RISCV64:
-    //   Now the emitIns_J_cond_la() is only the short condition branch.
-    //   There is no long condition branch for RISCV64 so far.
-    //   For RISCV64 , the long condition branch is like this:
-    //     --->  branch_condition  condition_target;     //here is the condition branch, short branch is enough.
-    //     --->  jump jump_target; (this supporting the long jump.)
-    //     condition_target:
-    //     ...
-    //     ...
-    //     jump_target:
-    //
-    //
-    // INS_OPTS_J_cond: placeholders.  1-ins.
-    //   ins  reg1, reg2, dst
-
-    assert(dst != nullptr);
-    assert(dst->HasFlag(BBF_HAS_LABEL));
-
-    instrDescJmp* id = emitNewInstrJmp();
-
-    id->idIns(ins);
-    id->idReg1(reg1);
-    id->idReg2(reg2);
-    id->idjShort = false;
-
-    id->idInsOpt(INS_OPTS_J_cond);
-    id->idAddr()->iiaBBlabel = dst;
-
-    id->idjKeepLong = emitComp->fgInDifferentRegions(emitComp->compCurBB, dst);
-#ifdef DEBUG
-    if (emitComp->opts.compLongAddress) // Force long branches
-        id->idjKeepLong = 1;
-#endif // DEBUG
-
-    /* Record the jump's IG and offset within it */
-    id->idjIG   = emitCurIG;
-    id->idjOffs = emitCurIGsize;
-
-    /* Append this jump to this IG's jump list */
-    id->idjNext      = emitCurIGjmpList;
-    emitCurIGjmpList = id;
-
-#if EMITTER_STATS
-    emitTotalIGjmps++;
-#endif
-
-    id->idCodeSize(4);
-
-    id->IDDEBUGINSTRSOURCE = 16;
 
     appendToCurIG(id);
 }
