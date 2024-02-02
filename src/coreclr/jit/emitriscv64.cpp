@@ -46,7 +46,7 @@ static constexpr size_t NBitMask(uint8_t bits)
 }
 
 template <uint8_t MaskSize>
-static ssize_t LowerNBitsOfWord(ssize_t word)
+static INT32 LowerNBitsOfWord(INT32 word)
 {
     static_assert(MaskSize < 32, "Given mask size is bigger than the word itself");
     static_assert(MaskSize > 0, "Given mask size cannot be zero");
@@ -57,7 +57,7 @@ static ssize_t LowerNBitsOfWord(ssize_t word)
 }
 
 template <uint8_t MaskSize>
-static ssize_t UpperNBitsOfWord(ssize_t word)
+static INT32 UpperNBitsOfWord(INT32 word)
 {
     static constexpr size_t kShift = 32 - MaskSize;
 
@@ -65,35 +65,35 @@ static ssize_t UpperNBitsOfWord(ssize_t word)
 }
 
 template <uint8_t RangeBegin, uint8_t MaskSize>
-static ssize_t MiddleNBitsOfWord(ssize_t word)
+static INT32 MiddleNBitsOfWord(INT32 word)
 {
     return LowerNBitsOfWord<MaskSize>(word >> RangeBegin);
 }
 
 template <uint8_t Shift>
-static ssize_t SignExtend(ssize_t word)
+static ssize_t SignExtend(ssize_t doubleWord)
 {
     static constexpr unsigned kSignExtend = 1 << Shift;
 
-    return word + kSignExtend;
+    return doubleWord + kSignExtend;
 }
 
 template <uint8_t MaskSize>
-static ssize_t UpperNBitsOfWordSignExtend(ssize_t word)
+static INT32 UpperNBitsOfWordSignExtend(INT32 word)
 {
-    return UpperNBitsOfWord<MaskSize>(SignExtend<31 - MaskSize>(word));
+    return UpperNBitsOfWord<MaskSize>(static_cast<INT32>(SignExtend<31 - MaskSize>(word)));
 }
 
-static ssize_t UpperWordOfDoubleWord(ssize_t immediate)
+static ssize_t UpperWordOfDoubleWord(ssize_t doubleWord)
 {
-    return immediate >> 32;
+    return doubleWord >> 32;
 }
 
-static ssize_t LowerWordOfDoubleWord(ssize_t immediate)
+static INT32 LowerWordOfDoubleWord(ssize_t doubleWord)
 {
     static constexpr size_t kWordMask = NBitMask(32);
 
-    return immediate & kWordMask;
+    return static_cast<INT32>(doubleWord & kWordMask);
 }
 
 template <uint8_t UpperMaskSize, uint8_t LowerMaskSize>
@@ -106,13 +106,13 @@ static ssize_t DoubleWordSignExtend(ssize_t doubleWord)
 }
 
 template <uint8_t UpperMaskSize>
-static ssize_t UpperWordOfDoubleWordSingleSignExtend(ssize_t doubleWord)
+static INT32 UpperWordOfDoubleWordSingleSignExtend(ssize_t doubleWord)
 {
     return UpperWordOfDoubleWord(SignExtend<31 - UpperMaskSize>(doubleWord));
 }
 
 template <uint8_t UpperMaskSize, uint8_t LowerMaskSize>
-static ssize_t UpperWordOfDoubleWordDoubleSignExtend(ssize_t doubleWord)
+static INT32 UpperWordOfDoubleWordDoubleSignExtend(ssize_t doubleWord)
 {
     return UpperWordOfDoubleWord(DoubleWordSignExtend<UpperMaskSize, LowerMaskSize>(doubleWord));
 }
@@ -199,7 +199,6 @@ bool emitter::emitInsWritesToLclVarStackLoc(instrDesc* id)
         case INS_sb:
         case INS_sh:
             return true;
-
         default:
             return false;
     }
@@ -232,9 +231,10 @@ bool emitter::emitInsIsLoad(instruction ins)
 {
     // We have pseudo ins like lea which are not included in emitInsLdStTab.
     if (ins < ArrLen(CodeGenInterface::instInfo))
+    {
         return (CodeGenInterface::instInfo[ins] & LD) != 0;
-    else
-        return false;
+    }
+    return false;
 }
 
 //------------------------------------------------------------------------
@@ -244,9 +244,10 @@ bool emitter::emitInsIsStore(instruction ins)
 {
     // We have pseudo ins like lea which are not included in emitInsLdStTab.
     if (ins < ArrLen(CodeGenInterface::instInfo))
+    {
         return (CodeGenInterface::instInfo[ins] & ST) != 0;
-    else
-        return false;
+    }
+    return false;
 }
 
 //-------------------------------------------------------------------------
@@ -256,9 +257,10 @@ bool emitter::emitInsIsLoadOrStore(instruction ins)
 {
     // We have pseudo ins like lea which are not included in emitInsLdStTab.
     if (ins < ArrLen(CodeGenInterface::instInfo))
+    {
         return (CodeGenInterface::instInfo[ins] & (LD | ST)) != 0;
-    else
-        return false;
+    }
+    return false;
 }
 
 /*****************************************************************************
@@ -280,7 +282,7 @@ inline emitter::code_t emitter::emitInsCode(instruction ins /*, insFormat fmt*/)
 
     code = insCode[ins];
 
-    assert((code != BAD_CODE));
+    assert(code != BAD_CODE);
 
     return code;
 }
@@ -318,8 +320,6 @@ void emitter::emitIns(instruction ins)
 
     id->idIns(ins);
     id->idCodeSize(4);
-
-    id->IDDEBUGINSTRSOURCE = 1;
 
     appendToCurIG(id);
 }
@@ -394,27 +394,12 @@ void emitter::emitIns_S_R_R(instruction ins, emitAttr attr, regNumber rs2, regNu
     emitIns_S_R_R_SanityCheck(ins, rs1, rs2);
 #endif // DEBUG
 
-    if (!isValidSimm12(imm))
-    {
-        assert(isValidSimm32(imm));
+    instrDesc* id = emitIns_R_S_GenIns(ins, rs1, rs2, attr, imm);
 
-        emitIns_R_I(INS_lui, EA_PTRSIZE, codeGen->rsGetRsvdReg(), UpperNBitsOfWordSignExtend<20>(imm));
-        emitIns_R_R_R(INS_add, EA_PTRSIZE, codeGen->rsGetRsvdReg(), codeGen->rsGetRsvdReg(), rs1);
-
-        rs1 = codeGen->rsGetRsvdReg();
-    }
-
-    instrDesc* id = emitNewInstrCns(attr, LowerNBitsOfWord<12>(imm));
-
-    id->idIns(ins);
-    id->idReg1(rs1);
-    id->idReg2(rs2);
     id->idCodeSize(4);
     id->idInsOpt(INS_OPTS_NONE);
     id->idAddr()->iiaLclVar.initLclVarAddr(varx, offs);
     id->idSetIsLclVar();
-
-    id->IDDEBUGINSTRSOURCE = 2;
 
     appendToCurIG(id);
 }
@@ -423,12 +408,10 @@ void emitter::emitIns_S_R_R(instruction ins, emitAttr attr, regNumber rs2, regNu
 
 void emitter::emitIns_R_S_SanityCheck(instruction ins, emitAttr attr, regNumber rd, regNumber rs1)
 {
-    emitAttr size = EA_SIZE(attr);
-
     switch (ins)
     {
         case INS_lea:
-            assert(size == EA_8BYTE);
+            assert(EA_SIZE(attr) == EA_8BYTE);
             FALLTHROUGH;
         case INS_lb:
         case INS_lbu:
@@ -473,7 +456,7 @@ emitter::instrDesc* emitter::emitIns_R_S_GenLeaInstr(regNumber rd, regNumber rs1
 {
     regNumber rsvdReg = codeGen->rsGetRsvdReg();
 
-    instrDesc* id = NULL;
+    instrDesc* id = nullptr;
     if (isValidSimm12(imm))
     {
         id = emitNewInstrCns(attr, TrimSignedToImm12(imm));
@@ -500,6 +483,7 @@ emitter::instrDesc* emitter::emitIns_R_S_GenIns(
 
     if (!isValidSimm12(imm))
     {
+        assert(isValidSimm32(imm));
         emitIns_R_I(INS_lui, EA_PTRSIZE, rsvdReg, UpperNBitsOfWordSignExtend<20>(imm));
         emitIns_R_R_R(INS_add, EA_PTRSIZE, rsvdReg, rsvdReg, rs1);
 
