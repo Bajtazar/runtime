@@ -2991,7 +2991,7 @@ void CodeGen::genCodeForReturnTrap(GenTreeOp* tree)
     genConsumeRegs(data);
 
     BasicBlock* skipLabel = genCreateTempLabel();
-    GetEmitter()->emitIns_J_cond_la(INS_beq, skipLabel, data->GetRegNum(), REG_R0);
+    GetEmitter()->emitIns_J_R_R(INS_beq, skipLabel, data->GetRegNum(), REG_R0);
 
     void*                 pAddr = nullptr;
     void*                 addr  = compiler->compGetHelperFtn(CORINFO_HELP_STOP_FOR_GC, &pAddr);
