@@ -805,7 +805,7 @@ void emitter::emitIns_R_R_SetFloatInstrAdditionalData(instrDesc* id, instruction
         case INS_fcvt_d_w:
         case INS_fcvt_d_s:
             id->idReg3(static_cast<regNumber>(0));
-            id->idRoundModifier(kDynamicRoundingMode);
+            id->idRoundingMode(kDynamicRoundingMode);
             break;
         case INS_fcvt_wu_s:
         case INS_fcvt_wu_d:
@@ -813,21 +813,21 @@ void emitter::emitIns_R_R_SetFloatInstrAdditionalData(instrDesc* id, instruction
         case INS_fcvt_d_wu:
         case INS_fcvt_s_d:
             id->idReg3(static_cast<regNumber>(1));
-            id->idRoundModifier(kDynamicRoundingMode);
+            id->idRoundingMode(kDynamicRoundingMode);
             break;
         case INS_fcvt_l_s:
         case INS_fcvt_l_d:
         case INS_fcvt_s_l:
         case INS_fcvt_d_l:
             id->idReg3(static_cast<regNumber>(2));
-            id->idRoundModifier(kDynamicRoundingMode);
+            id->idRoundingMode(kDynamicRoundingMode);
             break;
         case INS_fcvt_lu_s:
         case INS_fcvt_lu_d:
         case INS_fcvt_s_lu:
         case INS_fcvt_d_lu:
             id->idReg3(static_cast<regNumber>(3));
-            id->idRoundModifier(kDynamicRoundingMode);
+            id->idRoundingMode(kDynamicRoundingMode);
             break;
         case INS_lr_w:
         case INS_lr_d:
@@ -1115,7 +1115,7 @@ void emitter::emitIns_R_R_R(
         case INS_fsub_s:
         case INS_fmul_s:
         case INS_fdiv_s:
-            id->idRoundModifier(kDynamicRoundingMode);
+            id->idRoundingMode(kDynamicRoundingMode);
             break;
         case INS_sc_w:
         case INS_amoswap_w:
@@ -1195,7 +1195,7 @@ void emitter::emitIns_R_R_R_R(
     id->idReg2(reg2);
     id->idReg3(reg3);
     id->idReg4(reg4);
-    id->idRoundModifier(kDynamicRoundingMode);
+    id->idRoundingMode(kDynamicRoundingMode);
     id->idCodeSize(4);
 
     id->IDDEBUGINSTRSOURCE = 10;
@@ -3728,7 +3728,7 @@ BYTE* emitter::emitOutputInstr_OptsNone(BYTE* dst, const instrDesc* id, instruct
         case INS_fcvt_s_lu:
         case INS_fcvt_d_lu:
             dst += emitOutput_RTypeInstr_RoundMode(dst, ins, id->idReg1(), id->idReg2(), id->idReg3(),
-                                                   id->idRoundModifier());
+                                                   id->idRoundingMode());
             break;
         // R-Type atomic instructions
         case INS_lr_w:
@@ -3766,7 +3766,7 @@ BYTE* emitter::emitOutputInstr_OptsNone(BYTE* dst, const instrDesc* id, instruct
         case INS_fnmadd_d:
         case INS_fnmsub_d:
             dst += emitOutput_R4TypeInstr(dst, ins, id->idReg1(), id->idReg2(), id->idReg3(), id->idReg4(),
-                                          id->idRoundModifier());
+                                          id->idRoundingMode());
             break;
         // S-Type instructions
         case INS_sd:

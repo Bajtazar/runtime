@@ -1159,12 +1159,12 @@ protected:
             _idCodeSize = sz;
         }
 
-        unsigned char idRoundModifier() const
+        unsigned char idRoundingMode() const
         {
             return idAddr()->_roundModifier;
         }
 
-        void idRoundModifier(unsigned char roundModifier)
+        void idRoundingMode(unsigned char roundModifier)
         {
             assert(roundModifier < 8);
             idAddr()->_roundModifier = roundModifier;
