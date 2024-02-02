@@ -1546,30 +1546,46 @@ void emitter::emitIns_J_R_R(
     appendToCurIG(id);
 }
 
-void emitter::emitIns_J(instruction ins, BasicBlock* dst)
+void emitter::emitIns_J(instruction ins, BasicBlock* dst, int instrCount)
 {
-    assert(INS_j == ins); // Only the j instruction can perform jump without regs
-    assert(dst != nullptr);
-    assert(dst->HasFlag(BBF_HAS_LABEL));
+    assert((INS_jal <= ins) && (ins <= INS_bgeu)); // Change with sanity check
 
     instrDescJmp* id = emitNewInstrJmp();
 
     id->idIns(ins);
 
-    id->idjShort = false;
+    if (dst != nullptr)
+    {
+        assert(dst->HasFlag(BBF_HAS_LABEL));
 
-    // TODO-RISCV64: maybe deleted this.
-    id->idjKeepLong = emitComp->fgInDifferentRegions(emitComp->compCurBB, dst);
+        id->idjShort = false;
+
+        // TODO-RISCV64: maybe deleted this.
+        id->idjKeepLong = emitComp->fgInDifferentRegions(emitComp->compCurBB, dst);
 #ifdef DEBUG
-    if (emitComp->opts.compLongAddress) // Force long branches
-        id->idjKeepLong = true;
+        if (emitComp->opts.compLongAddress) // Force long branches
+            id->idjKeepLong = true;
 #endif // DEBUG
 
-    id->idAddr()->iiaBBlabel = dst;
+        id->idAddr()->iiaBBlabel = dst;
 
-    if (emitComp->opts.compReloc)
+        // @TODO - remove this
+        id->idReg1((regNumber)(instrCount & 0x1f));
+        id->idReg2((regNumber)((instrCount >> 5) & 0x1f));
+
+        if (emitComp->opts.compReloc)
+        {
+            id->idSetIsDspReloc();
+        }
+    }
+    else
     {
-        id->idSetIsDspReloc();
+        assert(instrCount != 0);
+
+        id->idAddr()->iiaSetInstrCount(instrCount);
+        id->idjKeepLong = false;
+        id->idjShort    = true;
+        id->idSetIsBound();
     }
 
     id->idInsOpt(INS_OPTS_J);

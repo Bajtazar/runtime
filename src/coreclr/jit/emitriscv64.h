@@ -274,7 +274,7 @@ inline static bool isFloatReg(regNumber reg)
 /*                   Output target-independent instructions             */
 /************************************************************************/
 
-void emitIns_J(instruction ins, BasicBlock* dst);
+void emitIns_J(instruction ins, BasicBlock* dst, int instrCount = 0);
 
 /************************************************************************/
 /*           The public entry points to output instructions             */
