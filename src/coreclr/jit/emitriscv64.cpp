@@ -1548,7 +1548,7 @@ void emitter::emitIns_J_R_R(
 
 void emitter::emitIns_J(instruction ins, BasicBlock* dst, int instrCount)
 {
-    assert((INS_jal <= ins) && (ins <= INS_bgeu)); // Change with sanity check
+    assert(INS_j == ins);
 
     instrDescJmp* id = emitNewInstrJmp();
 
@@ -1568,10 +1568,6 @@ void emitter::emitIns_J(instruction ins, BasicBlock* dst, int instrCount)
 #endif // DEBUG
 
         id->idAddr()->iiaBBlabel = dst;
-
-        // @TODO - remove this
-        id->idReg1((regNumber)(instrCount & 0x1f));
-        id->idReg2((regNumber)((instrCount >> 5) & 0x1f));
 
         if (emitComp->opts.compReloc)
         {
