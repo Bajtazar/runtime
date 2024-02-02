@@ -933,7 +933,7 @@ void emitter::emitIns_R_R_I(
 
     if (id->idInsIs(INS_sd, INS_sw, INS_sh, INS_sb, INS_fsd, INS_fsw))
     {
-        // Store instructions have swapped rd and rs1
+        // Store instructions have to swap the destination and source regs
         std::swap(reg1, reg2);
     }
 
