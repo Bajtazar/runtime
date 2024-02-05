@@ -1157,7 +1157,7 @@ BasicBlock* CodeGen::genCallFinally(BasicBlock* block)
     {
         GetEmitter()->emitIns_R_R_I(INS_ori, EA_PTRSIZE, REG_A0, REG_SPBASE, 0);
     }
-    GetEmitter()->emitIns_J(INS_jal, block->GetTarget());
+    GetEmitter()->emitIns_J(INS_j, block->GetTarget());
 
     BasicBlock* const nextBlock = block->Next();
 
@@ -3930,8 +3930,7 @@ void CodeGen::genCodeForJumpCompare(GenTreeOpCC* tree)
         }
     }
     assert(ins != INS_invalid);
-    assert(rs1 != REG_R0);
-    assert(rs2 != REG_R0);
+    assert((rs1 != REG_R0) || (rs2 != REG_R0));
 
     emit->emitIns_J_R_R(ins, compiler->compCurBB->GetTrueTarget(), rs1, rs2);
 }
