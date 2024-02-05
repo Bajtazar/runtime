@@ -67,6 +67,7 @@ void emitIns_R_R_R_R_SanityCheck(instruction ins, regNumber rd, regNumber reg1, 
 void emitIns_J_R_R_SanityCheck(instruction ins, regNumber rs1, regNumber rs2);
 #endif // DEBUG
 
+regNumber emitUpper20BitsOfSimmToReg(regNumber reg, ssize_t imm);
 void emitIns_S_R_R_GetRs1AndImm(int varx, int offs, regNumber tmpReg, regNumber* rs1, ssize_t* imm);
 int emitIns_R_S_GetRs1AndImm(int varx, int offs, regNumber* rs1, ssize_t* imm);
 instrDesc* emitIns_R_S_GenLeaInstr(regNumber rd, regNumber rs1, emitAttr attr, ssize_t imm);

@@ -340,8 +340,8 @@ void emitter::emitIns_S_R(instruction ins, emitAttr attr, regNumber reg1, int va
 
 void emitter::emitIns_S_R_R_SanityCheck(instruction ins, regNumber reg1, regNumber reg2)
 {
-    assert((reg2 != REG_NA) && (reg2 != codeGen->rsGetRsvdReg()));
-    assert(reg1 != codeGen->rsGetRsvdReg());
+    assert((reg1 != REG_NA) && (reg1 != codeGen->rsGetRsvdReg()));
+    assert(reg2 != codeGen->rsGetRsvdReg());
 
     switch (ins)
     {
@@ -349,14 +349,13 @@ void emitter::emitIns_S_R_R_SanityCheck(instruction ins, regNumber reg1, regNumb
         case INS_sw:
         case INS_sh:
         case INS_sb:
-            assert(isGeneralRegisterOrR0(reg1));
-            assert(isGeneralRegister(reg2));
-
+            assert(isGeneralRegister(reg1));
+            assert(isGeneralRegisterOrR0(reg2));
             break;
         case INS_fsd:
         case INS_fsw:
-            assert(isFloatReg(reg1));
-            assert(isGeneralRegister(reg2));
+            assert(isGeneralRegister(reg1));
+            assert(isFloatReg(reg2));
             break;
         default:
             NO_WAY("illegal ins within emitIns_S_R_R!");
@@ -384,18 +383,35 @@ void emitter::emitIns_S_R_R_GetRs1AndImm(int varx, int offs, regNumber tmpReg, r
     }
 }
 
-void emitter::emitIns_S_R_R(instruction ins, emitAttr attr, regNumber reg1, regNumber tmpReg, int varx, int offs)
+regNumber emitter::emitUpper20BitsOfSimmToReg(regNumber reg, ssize_t imm) {
+    regNumber rsvdReg = codeGen->rsGetRsvdReg();
+
+    assert(isValidSimm32(imm));
+    emitIns_R_I(INS_lui, EA_PTRSIZE, rsvdReg, UpperNBitsOfWordSignExtend<20>(imm));
+    emitIns_R_R_R(INS_add, EA_PTRSIZE, rsvdReg, rsvdReg, reg);
+
+    return rsvdReg;
+}
+
+void emitter::emitIns_S_R_R(instruction ins, emitAttr attr, regNumber reg2, regNumber tmpReg, int varx, int offs)
 {
     ssize_t   imm;
-    regNumber reg2;
-    emitIns_S_R_R_GetRs1AndImm(varx, offs, tmpReg, &reg2, &imm);
+    regNumber reg1;
+    emitIns_S_R_R_GetRs1AndImm(varx, offs, tmpReg, &reg1, &imm);
 #ifdef DEBUG
     assert(tmpReg != codeGen->rsGetRsvdReg());
     emitIns_S_R_R_SanityCheck(ins, reg1, reg2);
 #endif // DEBUG
 
-    instrDesc* id = emitIns_R_S_GenIns(ins, reg1, reg2, attr, imm);
+    if (!isValidSimm12(imm))
+    {
+        reg1 = emitUpper20BitsOfSimmToReg(reg1, imm);
+    }
 
+    instrDesc* id = emitNewInstrCns(attr, LowerNBitsOfWord<12>(imm));
+    id->idIns(ins);
+    id->idReg1(reg1);
+    id->idReg2(reg2);
     id->idCodeSize(4);
     id->idInsOpt(INS_OPTS_NONE);
     id->idAddr()->iiaLclVar.initLclVarAddr(varx, offs);
@@ -483,11 +499,7 @@ emitter::instrDesc* emitter::emitIns_R_S_GenIns(
 
     if (!isValidSimm12(imm))
     {
-        assert(isValidSimm32(imm));
-        emitIns_R_I(INS_lui, EA_PTRSIZE, rsvdReg, UpperNBitsOfWordSignExtend<20>(imm));
-        emitIns_R_R_R(INS_add, EA_PTRSIZE, rsvdReg, rsvdReg, rs1);
-
-        rs1 = rsvdReg;
+        rs1 = emitUpper20BitsOfSimmToReg(rs1, imm);
     }
 
     instrDesc* id = emitNewInstrCns(attr, LowerNBitsOfWord<12>(imm));
