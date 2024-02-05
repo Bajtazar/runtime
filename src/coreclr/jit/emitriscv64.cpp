@@ -340,8 +340,8 @@ void emitter::emitIns_S_R(instruction ins, emitAttr attr, regNumber reg1, int va
 
 void emitter::emitIns_S_R_R_SanityCheck(instruction ins, regNumber reg1, regNumber reg2)
 {
-    assert((reg1 != REG_NA) && (reg1 != codeGen->rsGetRsvdReg()));
-    assert(reg2 != codeGen->rsGetRsvdReg());
+    assert((reg2 != REG_NA) && (reg2 != codeGen->rsGetRsvdReg()));
+    assert(reg1 != codeGen->rsGetRsvdReg());
 
     switch (ins)
     {
@@ -349,13 +349,14 @@ void emitter::emitIns_S_R_R_SanityCheck(instruction ins, regNumber reg1, regNumb
         case INS_sw:
         case INS_sh:
         case INS_sb:
-            assert(isGeneralRegister(reg1));
-            assert(isGeneralRegisterOrR0(reg2));
+            assert(isGeneralRegisterOrR0(reg1));
+            assert(isGeneralRegister(reg2));
+
             break;
         case INS_fsd:
         case INS_fsw:
-            assert(isGeneralRegister(reg1));
-            assert(isFloatReg(reg2));
+            assert(isFloatReg(reg1));
+            assert(isGeneralRegister(reg2));
             break;
         default:
             NO_WAY("illegal ins within emitIns_S_R_R!");
@@ -365,36 +366,35 @@ void emitter::emitIns_S_R_R_SanityCheck(instruction ins, regNumber reg1, regNumb
 
 #endif // DEBUG
 
-void emitter::emitIns_S_R_R_GetRs1AndImm(int varx, int offs, regNumber tmpReg, regNumber* rs1, ssize_t* imm)
+void emitter::emitIns_S_R_R_GetRs1AndImm(int varx, int offs, regNumber tmpReg, regNumber* reg2, ssize_t* imm)
 {
     /* Figure out the variable's frame position */
-    bool FPbased;
-    int  base = emitComp->lvaFrameAddress(varx, &FPbased);
-
-    regNumber regBase = FPbased ? REG_FPBASE : REG_SPBASE;
     if (tmpReg == REG_NA)
     {
-        *rs1 = regBase;
+        bool FPbased;
+        int  base = emitComp->lvaFrameAddress(varx, &FPbased);
+
+        *reg2 = FPbased ? REG_FPBASE : REG_SPBASE;
         *imm = base + offs;
     }
     else
     {
-        *rs1 = tmpReg;
+        *reg2 = tmpReg;
         *imm = offs;
     }
 }
 
-void emitter::emitIns_S_R_R(instruction ins, emitAttr attr, regNumber rs2, regNumber tmpReg, int varx, int offs)
+void emitter::emitIns_S_R_R(instruction ins, emitAttr attr, regNumber reg1, regNumber tmpReg, int varx, int offs)
 {
     ssize_t   imm;
-    regNumber rs1;
-    emitIns_S_R_R_GetRs1AndImm(varx, offs, tmpReg, &rs1, &imm);
+    regNumber reg2;
+    emitIns_S_R_R_GetRs1AndImm(varx, offs, tmpReg, &reg2, &imm);
 #ifdef DEBUG
     assert(tmpReg != codeGen->rsGetRsvdReg());
-    emitIns_S_R_R_SanityCheck(ins, rs1, rs2);
+    emitIns_S_R_R_SanityCheck(ins, reg1, reg2);
 #endif // DEBUG
 
-    instrDesc* id = emitIns_R_S_GenIns(ins, rs1, rs2, attr, imm);
+    instrDesc* id = emitIns_R_S_GenIns(ins, reg1, reg2, attr, imm);
 
     id->idCodeSize(4);
     id->idInsOpt(INS_OPTS_NONE);
